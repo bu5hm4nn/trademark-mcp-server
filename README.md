@@ -164,6 +164,86 @@ curl http://localhost:3000/health
 - **Health Checks**: Built-in health monitoring on `/health`
 - **Production Ready**: Optimized for production deployments
 
+## 📦 Local Trademark Database Setup
+
+For wordmark (text) searches, you can set up a local PostgreSQL database with USPTO bulk trademark data. This enables the `trademark_search_by_wordmark` tool for fuzzy text searches across 13+ million trademark records.
+
+### Quick Start
+
+```bash
+cd scripts/
+./setup.sh
+```
+
+The interactive wizard will guide you through:
+
+1. **USPTO API Key** - Get one at [developer.uspto.gov](https://developer.uspto.gov)
+2. **Database Setup** - Use Docker (recommended) or an existing PostgreSQL
+3. **Data Selection** - Choose what to import:
+   - Daily updates only (recent filings)
+   - Annual archive (1884-present, ~9 GB)
+   - Full setup (archive + daily updates, recommended)
+
+### What Gets Installed
+
+- **PostgreSQL 15** with `pg_trgm` extension for fuzzy matching
+- **13+ million** trademark records from USPTO bulk data
+- **Automatic indexing** for fast wordmark searches
+
+### Command Line Options
+
+```bash
+# Interactive mode (default)
+./setup.sh
+
+# Non-interactive with pre-configured options
+./setup.sh --api-key YOUR_KEY --db-url postgresql://user:pass@host:5432/db
+
+# Test mode (single file, no prompts)
+./setup.sh --test
+```
+
+### Manual Database Setup
+
+If you prefer manual setup:
+
+```bash
+# 1. Start PostgreSQL (or use existing)
+docker compose -f scripts/docker-compose.db.yml up -d
+
+# 2. Create virtual environment
+cd scripts/
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# 3. Initialize schema and load data
+python load_xml.py --init-db --db-url postgresql://trademark:trademark@localhost:5432/trademarks
+python load_xml.py --xml-paths /path/to/apc250121.zip --db-url postgresql://...
+```
+
+### Environment Variables
+
+After setup, your `.env` file will contain:
+
+```bash
+USPTO_API_KEY=your_api_key
+TRADEMARK_DB_URL=postgresql://trademark:trademark@localhost:5432/trademarks
+```
+
+### Data Updates
+
+To update with the latest daily files:
+
+```bash
+cd scripts/
+./setup.sh  # Choose "Daily updates only"
+```
+
+The wizard detects existing data and only downloads new files.
+
+---
+
 ### Development
 
 ```bash

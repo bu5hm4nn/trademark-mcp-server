@@ -856,6 +856,7 @@ def process_files_parallel(file_paths: List[str], num_workers: int = NUM_WORKERS
 def main():
     parser = argparse.ArgumentParser(description="Load USPTO Trademark XML data into PostgreSQL (Multithreaded)")
     parser.add_argument("--xml-path", help="Path to a single XML or ZIP file")
+    parser.add_argument("--xml-paths", nargs="+", help="Multiple XML or ZIP file paths for parallel processing")
     parser.add_argument("--bulk-dir", help="Path to directory containing bulk XML/ZIP files (apc*.zip)")
     parser.add_argument("--daily-dir", help="Path to directory containing daily update files")
     parser.add_argument("--pattern", default="apc*.zip", help="File pattern to match (default: apc*.zip)")
@@ -874,6 +875,10 @@ def main():
     if args.init_db or args.bulk_dir:
         logger.info("Initializing database schema...")
         init_database()
+        # If only init was requested, exit early
+        if args.init_db and not args.bulk_dir and not args.daily_dir and not args.xml_path:
+            logger.info("Database initialized successfully")
+            return
 
     if args.create_indexes:
         create_indexes()
@@ -881,7 +886,16 @@ def main():
 
     total_loaded = 0
 
-    if args.xml_path:
+    if args.xml_paths:
+        # Multiple files - process in parallel
+        files = [f for f in args.xml_paths if os.path.exists(f)]
+        if not files:
+            logger.error("No valid files found in --xml-paths")
+            sys.exit(1)
+        logger.info(f"Processing {len(files)} files in parallel")
+        total_loaded = process_files_parallel(files, args.workers)
+
+    elif args.xml_path:
         # Single file
         if args.xml_path.endswith('.zip'):
             total_loaded = process_zip_file(args.xml_path)

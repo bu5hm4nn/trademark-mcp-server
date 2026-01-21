@@ -40,8 +40,11 @@ trademark-mcp-server/
 │   ├── server.ts     # HTTP server entry point
 │   └── bin.ts        # CLI entry point (stdio)
 ├── scripts/
-│   ├── load_data.py  # USPTO bulk data downloader
+│   ├── setup.sh      # Interactive setup wizard entry point
+│   ├── wizard.py     # Main setup wizard (API key, DB, download, import)
 │   ├── load_xml.py   # XML parser for trademark data
+│   ├── docker-compose.db.yml  # Standalone PostgreSQL for easy setup
+│   ├── init.sql      # PostgreSQL initialization (extensions)
 │   └── requirements.txt
 ├── Dockerfile        # Production Docker image
 └── package.json
@@ -58,18 +61,25 @@ trademark-mcp-server/
 
 ## Data Loading Scripts
 
-The `scripts/` directory contains Python scripts to populate PostgreSQL with USPTO trademark data.
+The `scripts/` directory contains tools to populate PostgreSQL with USPTO trademark data.
 
-### Current State
+### Quick Start
 
-The scripts work but need improvement for ease of use:
+```bash
+cd scripts/
+./setup.sh
+```
 
-1. **load_data.py** - Downloads USPTO bulk data files
-2. **load_xml.py** - Parses XML and loads into PostgreSQL
+This launches an interactive wizard that:
+1. Prompts for your USPTO API key (get one at https://developer.uspto.gov)
+2. Sets up PostgreSQL (via Docker or existing connection)
+3. Downloads trademark data from USPTO
+4. Imports into database with progress bars
+5. Creates search indexes
 
 ### Data Source
 
-USPTO Trademark Case Files Dataset: https://bulkdata.uspto.gov/
+USPTO Trademark Daily XML Files (via Bulk Data API)
 
 - Daily update files: `apc25MMDD.zip`, `apc26MMDD.zip`
 - Contains 13M+ trademark records
@@ -103,46 +113,142 @@ ON trademarks (status_code);
 
 ---
 
-## TODO: Improve Data Loading
+## USPTO Bulk Data API Reference
 
-**Goal**: Make the data loading process simple and reliable for end users.
-
-### Current Issues
-
-1. **Complex setup** - User needs to manually download files, configure paths, run multiple scripts
-2. **No progress feedback** - Long-running imports don't show progress well
-3. **Error handling** - Scripts may fail silently or with cryptic errors
-4. **No incremental updates** - Full reload required for updates
-
-### Desired User Experience
-
+### Authentication
+All endpoints require the `x-api-key` header:
 ```bash
-# Ideal: Single command to set up and update trademark database
-cd scripts/
-pip install -r requirements.txt
-
-# Initial setup (downloads ~10GB, takes hours)
-python load_data.py --init --db-url postgresql://user:pass@host:5432/trademarks
-
-# Daily updates (downloads ~50MB, takes minutes)
-python load_data.py --update --db-url postgresql://user:pass@host:5432/trademarks
+curl -H "x-api-key: YOUR_API_KEY" https://api.uspto.gov/api/v1/datasets/products/search
 ```
 
-### Suggested Improvements
+### Endpoints
 
-1. **Unified CLI** - Single entry point with clear commands
-2. **Progress bars** - Use `tqdm` or similar for visual feedback
-3. **Resume support** - Handle interruptions gracefully
-4. **Logging** - Clear log output with verbosity levels
-5. **Validation** - Check database connection before starting
-6. **Docker option** - Dockerfile that handles the whole process
+#### 1. Search Products
+```
+GET https://api.uspto.gov/api/v1/datasets/products/search
+```
+Lists all available bulk data products.
 
-### Implementation Notes
+#### 2. Product Details
+```
+GET https://api.uspto.gov/api/v1/datasets/products/{productIdentifier}
+```
+Returns metadata and file list for a specific product.
 
-- Keep Python scripts separate from Node.js MCP server
-- PostgreSQL connection uses same `TRADEMARK_DB_URL` env var as MCP server
-- Target audience: DevOps/technical users setting up the system
-- Consider adding a health check endpoint to verify data freshness
+**Response Example:**
+```json
+{
+  "count": 1,
+  "bulkDataProductBag": [
+    {
+      "productIdentifier": "TRTDXFAP",
+      "productDescriptionText": "Trademark Daily XML Files",
+      "productTitleText": "Trademark Daily XML Files",
+      "productFrequencyText": "DAILY",
+      "productFileBag": {
+        "count": 100,
+        "fileDataBag": [
+          {
+            "fileName": "apc250421.zip",
+            "fileSize": 50000000,
+            "fileDataFromDate": "2025-04-21",
+            "fileDataToDate": "2025-04-21",
+            "fileDownloadURI": "https://api.uspto.gov/api/v1/datasets/products/files/TRTDXFAP/apc250421.zip",
+            "fileLastModifiedDateTime": "2025-04-22 01:00:00"
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+#### 3. Download File
+```
+GET https://api.uspto.gov/api/v1/datasets/products/files/{productIdentifier}/{fileName}
+```
+
+**Example:**
+```bash
+curl -L -H "x-api-key: YOUR_API_KEY" \
+  https://api.uspto.gov/api/v1/datasets/products/files/TRTDXFAP/apc250421.zip \
+  -o apc250421.zip
+```
+
+### Trademark Product IDs
+- **TRTDXFAP** - Trademark Daily XML Files (daily updates)
+- **TRTYRAP** - Trademark Annual XML Files (full archive 1884-present, ~9 GB)
+
+### Schema Reference
+- Response Schema: https://data.uspto.gov/documents/documents/bulkdata-response-schema.json
+
+### Rate Limiting & Best Practices
+
+**HTTP 429 Handling:**
+```python
+SLEEP_AFTER_429 = 0.1
+HTTP_RETRY = 10
+
+def make_request(url, retry=0):
+    response = requests.get(url, headers=headers, allow_redirects=True)
+    if response.status_code == 429 and retry < HTTP_RETRY:
+        time.sleep(SLEEP_AFTER_429)
+        return make_request(url, retry + 1)
+    return response
+```
+
+**Important Notes:**
+- Always follow redirects (`-L` in curl, `allow_redirects=True` in Python)
+- Set timeout to 600 seconds for large files (100MB+ may have 60s delay before streaming)
+- Files larger than 250MB may timeout after 10 minutes
+- Use exponential backoff for rate limit errors
+
+---
+
+## Advanced Usage
+
+### Manual Data Loading
+
+For advanced users who want to bypass the wizard:
+
+```bash
+# Initialize database schema only
+python load_xml.py --init-db
+
+# Load a specific ZIP file
+python load_xml.py --xml-path /path/to/apc250121.zip
+
+# Load all files from a directory
+python load_xml.py --bulk-dir /path/to/data --workers 4
+
+# Create indexes only
+python load_xml.py --create-indexes
+```
+
+### Environment Variables for load_xml.py
+
+```bash
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=trademarks
+DB_USER=trademark
+DB_PASSWORD=trademark
+NUM_WORKERS=6        # Parallel processing workers
+BATCH_SIZE=5000      # Records per batch
+```
+
+### Docker Database Management
+
+```bash
+# Start standalone PostgreSQL
+docker compose -f scripts/docker-compose.db.yml up -d
+
+# Stop and remove
+docker compose -f scripts/docker-compose.db.yml down
+
+# Stop and remove including data
+docker compose -f scripts/docker-compose.db.yml down -v
+```
 
 ## Development
 

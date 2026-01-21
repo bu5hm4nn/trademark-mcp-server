@@ -1,6 +1,9 @@
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
+# USPTO Trademark Database Scripts
+#
+# Core dependencies
 psycopg2-binary==2.9.9
-pandas==2.1.4
 python-dotenv==1.0.0
 httpx==0.26.0
+
+# Wizard UI
+rich>=13.0.0
