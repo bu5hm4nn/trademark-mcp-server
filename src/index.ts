@@ -3,22 +3,24 @@ import { z } from "zod"
 
 const server = new FastMCP({
   name: "trademark-mcp-server",
-  version: "1.0.0",
+  version: "1.1.0",
   instructions: `
-This MCP server provides tools for searching and retrieving USPTO trademark information using the TSDR API.
+This MCP server provides tools for searching and retrieving USPTO trademark information.
 
 Available tools:
-- trademark_search_by_serial: Search for trademarks by 8-digit serial number
-- trademark_search_by_registration: Search for trademarks by 7-8 digit registration number  
-- trademark_status: Get detailed status information for a specific trademark
-- trademark_image: Retrieve trademark image URLs
-- trademark_documents: Get document bundle URLs for a trademark
+- trademark_search_by_wordmark: Search trademarks by text/phrase (uses local database if configured, otherwise provides TESS links)
+- trademark_search_by_serial: Retrieve trademark details by 8-digit serial number (requires USPTO API key)
+- trademark_search_by_registration: Retrieve trademark details by 7-8 digit registration number (requires USPTO API key)
+- trademark_status: Get status information for a specific trademark (requires USPTO API key)
+- trademark_image: Retrieve trademark image URLs (requires USPTO API key)
+- trademark_documents: Get document bundle URLs for a trademark (requires USPTO API key)
 
-The server uses the USPTO TSDR (Trademark Status & Document Retrieval) API to provide real-time trademark data.
-Rate limits: 60 requests per minute for general API calls, 4 requests per minute for PDF/ZIP downloads.
+Environment Variables:
+- USPTO_API_KEY: Required for TSDR API calls (serial/registration lookups). Get from https://developer.uspto.gov/
+- TRADEMARK_DB_URL: Optional. PostgreSQL connection string for local trademark database (e.g., postgresql://user:pass@host:5432/trademarks)
 
-IMPORTANT: An API key is required to access the USPTO TSDR API (since October 2020).
-Set the USPTO_API_KEY environment variable with your API key from https://developer.uspto.gov/
+Rate limits:
+- USPTO TSDR: 60 requests/min for general calls, 4 requests/min for PDF/ZIP downloads
 `,
   health: {
     enabled: true,
@@ -38,6 +40,38 @@ const TSDR_BASE_URL = "https://tsdrapi.uspto.gov/ts/cd"
 
 // API Key for USPTO TSDR API (required since October 2020)
 const API_KEY = process.env.USPTO_API_KEY
+
+// PostgreSQL connection string for local trademark database (optional)
+// Format: postgresql://user:password@host:port/database
+const TRADEMARK_DB_URL = process.env.TRADEMARK_DB_URL
+
+// TESS (Trademark Electronic Search System) URL for manual searches
+const TESS_SEARCH_URL = "https://tmsearch.uspto.gov/search/search-results"
+
+// Lazy-loaded PostgreSQL client (optional dependency)
+let pgPool: any = null
+let pgAvailable: boolean | null = null
+
+async function getPostgresPool(): Promise<any | null> {
+  if (pgAvailable === false) return null
+  if (pgPool) return pgPool
+
+  if (!TRADEMARK_DB_URL) {
+    pgAvailable = false
+    return null
+  }
+
+  try {
+    const pg = await import("pg")
+    pgPool = new pg.default.Pool({ connectionString: TRADEMARK_DB_URL })
+    pgAvailable = true
+    return pgPool
+  } catch {
+    // pg module not installed
+    pgAvailable = false
+    return null
+  }
+}
 
 // Helper function to get headers with API key
 function getHeaders(): Record<string, string> {
@@ -59,6 +93,99 @@ function checkApiKey(): string | null {
   }
   return null
 }
+
+// Helper function to check if local trademark database is available
+async function hasLocalTrademarkDb(): Promise<boolean> {
+  const pool = await getPostgresPool()
+  return pool !== null
+}
+
+// Trademark search by wordmark (text/phrase)
+server.addTool({
+  name: "trademark_search_by_wordmark",
+  description: "Search for trademarks by wordmark (text/phrase). Uses local trademark database if configured, otherwise provides TESS search URL for manual lookup.",
+  parameters: z.object({
+    wordmark: z.string().min(1).describe("The trademark text/phrase to search for"),
+    status: z.enum(["active", "all"]).default("all").describe("Filter by trademark status: 'active' (live trademarks only) or 'all'"),
+    limit: z.number().min(1).max(100).default(20).describe("Maximum number of results to return"),
+  }),
+  annotations: {
+    title: "Trademark Search by Wordmark",
+    readOnlyHint: true,
+    openWorldHint: true,
+  },
+  execute: async (args) => {
+    // Check if local trademark database is available
+    const pool = await getPostgresPool()
+
+    if (pool) {
+      try {
+        // Build the SQL query with trigram similarity search
+        let query = `
+          SELECT
+            serial_number,
+            registration_number,
+            mark_identification,
+            status_code,
+            filing_date,
+            registration_date,
+            similarity(mark_identification, $1) as sim_score
+          FROM trademarks
+          WHERE mark_identification % $1
+        `
+        const params: (string | number)[] = [args.wordmark]
+
+        // Filter by status if requested
+        if (args.status === "active") {
+          query += ` AND status_code IN ('LIVE', 'REGISTERED')`
+        }
+
+        query += ` ORDER BY sim_score DESC LIMIT $2`
+        params.push(args.limit)
+
+        const result = await pool.query(query, params)
+
+        if (result.rows.length === 0) {
+          return `No trademarks found matching "${args.wordmark}" (status: ${args.status}).`
+        }
+
+        const results = result.rows.map((tm: any, index: number) => {
+          return `${index + 1}. **${tm.mark_identification || "N/A"}**
+   - Serial Number: ${tm.serial_number || "N/A"}
+   - Registration Number: ${tm.registration_number || "N/A"}
+   - Status: ${tm.status_code || "N/A"}
+   - Filing Date: ${tm.filing_date || "N/A"}
+   - Registration Date: ${tm.registration_date || "N/A"}
+   - Similarity: ${(tm.sim_score * 100).toFixed(1)}%`
+        }).join("\n\n")
+
+        return `🔍 **Trademark Search Results for: "${args.wordmark}"** (status: ${args.status})\n\nFound ${result.rows.length} result(s):\n\n${results}\n\n---\nUse \`trademark_search_by_serial\` with a serial number to get full USPTO details.`
+      } catch (error) {
+        return `Error searching trademark database: ${error instanceof Error ? error.message : String(error)}\n\nFallback: Visit https://tmsearch.uspto.gov to search manually.`
+      }
+    }
+
+    // Fallback: Provide TESS search URL guidance
+    const tessUrl = `${TESS_SEARCH_URL}?query=${encodeURIComponent(args.wordmark)}&plurals=true&searchType=freeForm`
+
+    return `🔍 **Trademark Search for: "${args.wordmark}"**
+
+**Note:** Local trademark database not configured. Set TRADEMARK_DB_URL to enable programmatic wordmark search.
+
+**Manual Search Option:**
+📎 **TESS Search Link:** ${tessUrl}
+
+**Alternative Methods:**
+1. **Manual TESS Search:** Visit https://tmsearch.uspto.gov and enter your search
+2. **If you have a serial number:** Use \`trademark_search_by_serial\` for detailed trademark data
+3. **If you have a registration number:** Use \`trademark_search_by_registration\` for detailed data
+
+**Common Serial Numbers for Reference:**
+- Apple (logo): 78462704
+- Nike (swoosh): 72016902
+- Microsoft: 78213220`
+  },
+})
 
 // Trademark search by serial number
 server.addTool({
