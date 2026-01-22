@@ -1,3 +1,7 @@
+# Trademark data (loaded separately, not in image)
+data/
+scripts/
+
 # Dependencies
 node_modules
 npm-debug.log*
