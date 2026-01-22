@@ -1,5 +1,13 @@
 import { FastMCP } from "fastmcp"
 import { z } from "zod"
+import {
+  searchByWordmark,
+  searchBySerial,
+  searchByRegistration,
+  getTrademarkStatus,
+  getTrademarkImage,
+  getTrademarkDocuments,
+} from "./tools.js"
 
 const server = new FastMCP({
   name: "trademark-mcp-server",
@@ -35,71 +43,6 @@ Rate limits:
   },
 })
 
-// Base TSDR API URL
-const TSDR_BASE_URL = "https://tsdrapi.uspto.gov/ts/cd"
-
-// API Key for USPTO TSDR API (required since October 2020)
-const API_KEY = process.env.USPTO_API_KEY
-
-// PostgreSQL connection string for local trademark database (optional)
-// Format: postgresql://user:password@host:port/database
-const TRADEMARK_DB_URL = process.env.TRADEMARK_DB_URL
-
-// TESS (Trademark Electronic Search System) URL for manual searches
-const TESS_SEARCH_URL = "https://tmsearch.uspto.gov/search/search-results"
-
-// Lazy-loaded PostgreSQL client (optional dependency)
-let pgPool: any = null
-let pgAvailable: boolean | null = null
-
-async function getPostgresPool(): Promise<any | null> {
-  if (pgAvailable === false) return null
-  if (pgPool) return pgPool
-
-  if (!TRADEMARK_DB_URL) {
-    pgAvailable = false
-    return null
-  }
-
-  try {
-    const pg = await import("pg")
-    pgPool = new pg.default.Pool({ connectionString: TRADEMARK_DB_URL })
-    pgAvailable = true
-    return pgPool
-  } catch {
-    // pg module not installed
-    pgAvailable = false
-    return null
-  }
-}
-
-// Helper function to get headers with API key
-function getHeaders(): Record<string, string> {
-  const headers: Record<string, string> = {
-    "User-Agent": "trademark-mcp-server/1.0.0",
-  }
-
-  if (API_KEY) {
-    headers["USPTO-API-KEY"] = API_KEY
-  }
-
-  return headers
-}
-
-// Helper function to check if API key is configured
-function checkApiKey(): string | null {
-  if (!API_KEY) {
-    return "❌ USPTO API key not configured. Please set the USPTO_API_KEY environment variable with your API key from https://account.uspto.gov/api-manager/"
-  }
-  return null
-}
-
-// Helper function to check if local trademark database is available
-async function hasLocalTrademarkDb(): Promise<boolean> {
-  const pool = await getPostgresPool()
-  return pool !== null
-}
-
 // Trademark search by wordmark (text/phrase)
 server.addTool({
   name: "trademark_search_by_wordmark",
@@ -114,77 +57,7 @@ server.addTool({
     readOnlyHint: true,
     openWorldHint: true,
   },
-  execute: async (args) => {
-    // Check if local trademark database is available
-    const pool = await getPostgresPool()
-
-    if (pool) {
-      try {
-        // Build the SQL query with trigram similarity search
-        let query = `
-          SELECT
-            serial_number,
-            registration_number,
-            mark_identification,
-            status_code,
-            filing_date,
-            registration_date,
-            similarity(mark_identification, $1) as sim_score
-          FROM trademarks
-          WHERE mark_identification % $1
-        `
-        const params: (string | number)[] = [args.wordmark]
-
-        // Filter by status if requested
-        if (args.status === "active") {
-          query += ` AND status_code IN ('LIVE', 'REGISTERED')`
-        }
-
-        query += ` ORDER BY sim_score DESC LIMIT $2`
-        params.push(args.limit)
-
-        const result = await pool.query(query, params)
-
-        if (result.rows.length === 0) {
-          return `No trademarks found matching "${args.wordmark}" (status: ${args.status}).`
-        }
-
-        const results = result.rows.map((tm: any, index: number) => {
-          return `${index + 1}. **${tm.mark_identification || "N/A"}**
-   - Serial Number: ${tm.serial_number || "N/A"}
-   - Registration Number: ${tm.registration_number || "N/A"}
-   - Status: ${tm.status_code || "N/A"}
-   - Filing Date: ${tm.filing_date || "N/A"}
-   - Registration Date: ${tm.registration_date || "N/A"}
-   - Similarity: ${(tm.sim_score * 100).toFixed(1)}%`
-        }).join("\n\n")
-
-        return `🔍 **Trademark Search Results for: "${args.wordmark}"** (status: ${args.status})\n\nFound ${result.rows.length} result(s):\n\n${results}\n\n---\nUse \`trademark_search_by_serial\` with a serial number to get full USPTO details.`
-      } catch (error) {
-        return `Error searching trademark database: ${error instanceof Error ? error.message : String(error)}\n\nFallback: Visit https://tmsearch.uspto.gov to search manually.`
-      }
-    }
-
-    // Fallback: Provide TESS search URL guidance
-    const tessUrl = `${TESS_SEARCH_URL}?query=${encodeURIComponent(args.wordmark)}&plurals=true&searchType=freeForm`
-
-    return `🔍 **Trademark Search for: "${args.wordmark}"**
-
-**Note:** Local trademark database not configured. Set TRADEMARK_DB_URL to enable programmatic wordmark search.
-
-**Manual Search Option:**
-📎 **TESS Search Link:** ${tessUrl}
-
-**Alternative Methods:**
-1. **Manual TESS Search:** Visit https://tmsearch.uspto.gov and enter your search
-2. **If you have a serial number:** Use \`trademark_search_by_serial\` for detailed trademark data
-3. **If you have a registration number:** Use \`trademark_search_by_registration\` for detailed data
-
-**Common Serial Numbers for Reference:**
-- Apple (logo): 78462704
-- Nike (swoosh): 72016902
-- Microsoft: 78213220`
-  },
+  execute: async (args) => searchByWordmark(args),
 })
 
 // Trademark search by serial number
@@ -200,56 +73,7 @@ server.addTool({
     readOnlyHint: true,
     openWorldHint: true,
   },
-  execute: async (args) => {
-    const apiKeyError = checkApiKey()
-    if (apiKeyError) {
-      return apiKeyError
-    }
-
-    try {
-      // Use JSON or XML endpoint based on format parameter
-      const fileExtension = args.format === "json" ? "json" : "xml"
-      const url = `${TSDR_BASE_URL}/casestatus/sn${args.serialNumber}/info.${fileExtension}`
-
-      const response = await fetch(url, {
-        headers: getHeaders(),
-      })
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        if (errorText.includes("need to register for an API key")) {
-          throw new Error(`🔑 USPTO API Authentication Issue
-
-The USPTO TSDR API is rejecting our API key. This could be due to:
-
-1. **API Key Activation Delay**: New keys may need 24-48 hours to activate
-2. **Endpoint Restrictions**: Individual record endpoints may be temporarily disabled
-3. **Authentication Method**: The API might require a different authentication format
-
-**Your API Key**: ${API_KEY ? `${API_KEY.substring(0, 8)}...` : "Not set"}
-
-**Next Steps**:
-• Contact USPTO support: APIhelp@uspto.gov 
-• Include your API key and this error message
-• Ask specifically about individual record endpoint access
-
-**Alternative**: Try bulk data download endpoints if available.`)
-        }
-        throw new Error(`USPTO API returned ${response.status}: ${response.statusText}. Error: ${errorText}`)
-      }
-
-      // Parse response based on format
-      if (args.format === "json") {
-        const jsonData = await response.json()
-        return JSON.stringify(jsonData, null, 2)
-      } else {
-        const xmlData = await response.text()
-        return xmlData
-      }
-    } catch (error) {
-      return `Error fetching trademark data: ${error instanceof Error ? error.message : String(error)}`
-    }
-  },
+  execute: async (args) => searchBySerial(args),
 })
 
 // Trademark status lookup
@@ -264,53 +88,7 @@ server.addTool({
     readOnlyHint: true,
     openWorldHint: true,
   },
-  execute: async (args) => {
-    const apiKeyError = checkApiKey()
-    if (apiKeyError) {
-      return apiKeyError
-    }
-
-    try {
-      const url = `${TSDR_BASE_URL}/casestatus/sn${args.serialNumber}/content`
-
-      const response = await fetch(url, {
-        headers: getHeaders(),
-      })
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        if (errorText.includes("need to register for an API key")) {
-          throw new Error(`🔑 USPTO API Authentication Issue
-
-The USPTO TSDR API is rejecting our API key. This could be due to:
-
-1. **API Key Activation Delay**: New keys may need 24-48 hours to activate
-2. **Endpoint Restrictions**: Individual record endpoints may be temporarily disabled
-3. **Authentication Method**: The API might require a different authentication format
-
-**Your API Key**: ${API_KEY ? `${API_KEY.substring(0, 8)}...` : "Not set"}
-
-**Next Steps**:
-• Contact USPTO support: APIhelp@uspto.gov 
-• Include your API key and this error message
-• Ask specifically about individual record endpoint access
-
-**Alternative**: Try bulk data download endpoints if available.`)
-        }
-        throw new Error(`USPTO API returned ${response.status}: ${response.statusText}. Error: ${errorText}`)
-      }
-
-      const htmlContent = await response.text()
-
-      // Extract key information from HTML (basic parsing)
-      const titleMatch = htmlContent.match(/<title>(.*?)<\/title>/i)
-      const title = titleMatch ? titleMatch[1] : "No title found"
-
-      return `Trademark Status Report for Serial Number: ${args.serialNumber}\n\nTitle: ${title}\n\nFull HTML content available at: ${url}\n\nNote: This tool returns the HTML content from the USPTO. For structured data, use trademark_search_by_serial instead.`
-    } catch (error) {
-      return `Error fetching trademark status: ${error instanceof Error ? error.message : String(error)}`
-    }
-  },
+  execute: async (args) => getTrademarkStatus(args),
 })
 
 // Trademark image retrieval
@@ -325,30 +103,7 @@ server.addTool({
     readOnlyHint: true,
     openWorldHint: true,
   },
-  execute: async (args) => {
-    const apiKeyError = checkApiKey()
-    if (apiKeyError) {
-      return apiKeyError
-    }
-
-    try {
-      const imageUrl = `${TSDR_BASE_URL}/rawImage/${args.serialNumber}`
-
-      // Test if the image exists by making a HEAD request
-      const response = await fetch(imageUrl, {
-        method: "HEAD",
-        headers: getHeaders(),
-      })
-
-      if (!response.ok) {
-        return `No image found for trademark serial number: ${args.serialNumber}`
-      }
-
-      return `Trademark image URL for serial number ${args.serialNumber}: ${imageUrl}\n\nYou can view this image by opening the URL in a web browser.`
-    } catch (error) {
-      return `Error retrieving trademark image: ${error instanceof Error ? error.message : String(error)}`
-    }
-  },
+  execute: async (args) => getTrademarkImage(args),
 })
 
 // Trademark documents bundle
@@ -363,20 +118,7 @@ server.addTool({
     readOnlyHint: true,
     openWorldHint: true,
   },
-  execute: async (args) => {
-    const apiKeyError = checkApiKey()
-    if (apiKeyError) {
-      return apiKeyError
-    }
-
-    try {
-      const documentsUrl = `${TSDR_BASE_URL}/casedocs/bundle.pdf?sn=${args.serialNumber}`
-
-      return `Document bundle URL for trademark serial number ${args.serialNumber}: ${documentsUrl}\n\nThis URL provides a PDF containing all documents related to this trademark application.\n\nNote: Document downloads are rate-limited to 4 requests per minute per API key.`
-    } catch (error) {
-      return `Error generating document bundle URL: ${error instanceof Error ? error.message : String(error)}`
-    }
-  },
+  execute: async (args) => getTrademarkDocuments(args),
 })
 
 // Advanced trademark search by registration number
@@ -392,56 +134,7 @@ server.addTool({
     readOnlyHint: true,
     openWorldHint: true,
   },
-  execute: async (args) => {
-    const apiKeyError = checkApiKey()
-    if (apiKeyError) {
-      return apiKeyError
-    }
-
-    try {
-      // Use JSON or XML endpoint based on format parameter
-      const fileExtension = args.format === "json" ? "json" : "xml"
-      const url = `${TSDR_BASE_URL}/casestatus/rn${args.registrationNumber}/info.${fileExtension}`
-
-      const response = await fetch(url, {
-        headers: getHeaders(),
-      })
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        if (errorText.includes("need to register for an API key")) {
-          throw new Error(`🔑 USPTO API Authentication Issue
-
-The USPTO TSDR API is rejecting our API key. This could be due to:
-
-1. **API Key Activation Delay**: New keys may need 24-48 hours to activate
-2. **Endpoint Restrictions**: Individual record endpoints may be temporarily disabled
-3. **Authentication Method**: The API might require a different authentication format
-
-**Your API Key**: ${API_KEY ? `${API_KEY.substring(0, 8)}...` : "Not set"}
-
-**Next Steps**:
-• Contact USPTO support: APIhelp@uspto.gov 
-• Include your API key and this error message
-• Ask specifically about individual record endpoint access
-
-**Alternative**: Try bulk data download endpoints if available.`)
-        }
-        throw new Error(`USPTO API returned ${response.status}: ${response.statusText}. Error: ${errorText}`)
-      }
-
-      // Parse response based on format
-      if (args.format === "json") {
-        const jsonData = await response.json()
-        return JSON.stringify(jsonData, null, 2)
-      } else {
-        const xmlData = await response.text()
-        return xmlData
-      }
-    } catch (error) {
-      return `Error fetching trademark data by registration number: ${error instanceof Error ? error.message : String(error)}`
-    }
-  },
+  execute: async (args) => searchByRegistration(args),
 })
 
 export default server
