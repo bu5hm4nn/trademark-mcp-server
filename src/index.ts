@@ -48,7 +48,7 @@ server.addTool({
   name: "trademark_search_by_wordmark",
   description: "Search for trademarks by wordmark (text/phrase). Uses local trademark database if configured, otherwise provides TESS search URL for manual lookup.",
   parameters: z.object({
-    wordmark: z.string().min(1).describe("The trademark text/phrase to search for"),
+    wordmark: z.string().min(1).max(255).describe("The trademark text/phrase to search for"),
     status: z.enum(["active", "all"]).default("all").describe("Filter by trademark status: 'active' (live trademarks only) or 'all'"),
     limit: z.number().min(1).max(100).default(20).describe("Maximum number of results to return"),
   }),
@@ -65,7 +65,7 @@ server.addTool({
   name: "trademark_search_by_serial",
   description: "Search for trademark information using a serial number",
   parameters: z.object({
-    serialNumber: z.string().min(8).max(8).describe("8-digit trademark serial number"),
+    serialNumber: z.string().regex(/^\d{8}$/, "Must be exactly 8 digits").describe("8-digit trademark serial number"),
     format: z.enum(["json", "xml"]).default("json").describe("Response format"),
   }),
   annotations: {
@@ -81,7 +81,7 @@ server.addTool({
   name: "trademark_status",
   description: "Get comprehensive status information for a trademark by serial number",
   parameters: z.object({
-    serialNumber: z.string().min(8).max(8).describe("8-digit trademark serial number"),
+    serialNumber: z.string().regex(/^\d{8}$/, "Must be exactly 8 digits").describe("8-digit trademark serial number"),
   }),
   annotations: {
     title: "Trademark Status Lookup",
@@ -96,7 +96,7 @@ server.addTool({
   name: "trademark_image",
   description: "Get the image URL for a trademark by serial number",
   parameters: z.object({
-    serialNumber: z.string().min(8).max(8).describe("8-digit trademark serial number"),
+    serialNumber: z.string().regex(/^\d{8}$/, "Must be exactly 8 digits").describe("8-digit trademark serial number"),
   }),
   annotations: {
     title: "Trademark Image Retrieval",
@@ -111,7 +111,7 @@ server.addTool({
   name: "trademark_documents",
   description: "Get the document bundle URL for a trademark by serial number",
   parameters: z.object({
-    serialNumber: z.string().min(8).max(8).describe("8-digit trademark serial number"),
+    serialNumber: z.string().regex(/^\d{8}$/, "Must be exactly 8 digits").describe("8-digit trademark serial number"),
   }),
   annotations: {
     title: "Trademark Documents Bundle",
@@ -126,7 +126,7 @@ server.addTool({
   name: "trademark_search_by_registration",
   description: "Search for trademark information using a registration number",
   parameters: z.object({
-    registrationNumber: z.string().min(7).max(8).describe("7-8 digit trademark registration number"),
+    registrationNumber: z.string().regex(/^\d{7,8}$/, "Must be 7-8 digits").describe("7-8 digit trademark registration number"),
     format: z.enum(["json", "xml"]).default("json").describe("Response format"),
   }),
   annotations: {

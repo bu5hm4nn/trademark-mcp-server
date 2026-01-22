@@ -222,7 +222,7 @@ The USPTO TSDR API is rejecting our API key. This could be due to:
 2. **Endpoint Restrictions**: Individual record endpoints may be temporarily disabled
 3. **Authentication Method**: The API might require a different authentication format
 
-**Your API Key**: ${deps.getApiKey() ? `${deps.getApiKey()!.substring(0, 8)}...` : "Not set"}
+**API Key Status**: ${deps.getApiKey() ? "Set" : "Not set"}
 
 **Next Steps**:
 • Contact USPTO support: APIhelp@uspto.gov
@@ -271,7 +271,7 @@ export async function getTrademarkStatus(
 
 The USPTO TSDR API is rejecting our API key.
 
-**Your API Key**: ${deps.getApiKey() ? `${deps.getApiKey()!.substring(0, 8)}...` : "Not set"}
+**API Key Status**: ${deps.getApiKey() ? "Set" : "Not set"}
 
 **Next Steps**:
 • Contact USPTO support: APIhelp@uspto.gov`)
@@ -363,7 +363,7 @@ export async function searchByRegistration(
 
 The USPTO TSDR API is rejecting our API key.
 
-**Your API Key**: ${deps.getApiKey() ? `${deps.getApiKey()!.substring(0, 8)}...` : "Not set"}
+**API Key Status**: ${deps.getApiKey() ? "Set" : "Not set"}
 
 **Next Steps**:
 • Contact USPTO support: APIhelp@uspto.gov`)
