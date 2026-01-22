@@ -1,28 +1,48 @@
 # Trademark MCP Server
 
-[![smithery badge](https://smithery.ai/badge/@jordanburke/trademark-mcp-server)](https://smithery.ai/server/@jordanburke/trademark-mcp-server)
-
 A Model Context Protocol (MCP) server that provides tools for searching and retrieving USPTO trademark information using the TSDR API.
+
+## Quick Start
+
+**Without database** (look up specific trademarks):
+```bash
+export USPTO_API_KEY=your_key
+npx trademark-mcp-server
+```
+
+**With database** (search by wordmark/name):
+```bash
+cd scripts && ./setup.sh  # Interactive wizard
+```
 
 ## Features
 
 This MCP server provides the following tools:
 
-- **trademark_search_by_serial**: Search for trademark information using an 8-digit serial number
-- **trademark_search_by_registration**: Search for trademark information using a 7-8 digit registration number
-- **trademark_status**: Get comprehensive status information for a trademark (HTML format)
+- **trademark_search_by_wordmark**: Search trademarks by text/name (requires local database)
+- **trademark_search_by_serial**: Search by 8-digit serial number
+- **trademark_search_by_registration**: Search by 7-8 digit registration number
+- **trademark_status**: Get comprehensive status information (HTML format)
 - **trademark_image**: Retrieve trademark image URLs
-- **trademark_documents**: Get document bundle URLs for a trademark
+- **trademark_documents**: Get document bundle URLs
+
+## Operating Modes
+
+This server can run in two modes:
+
+### Basic Mode (API Only)
+- **Requirements**: USPTO API key only
+- **Tools available**: All tools EXCEPT `trademark_search_by_wordmark`
+- **Use case**: Look up specific trademarks by serial/registration number
+
+### Enhanced Mode (With Local Database)
+- **Requirements**: USPTO API key + PostgreSQL database with USPTO bulk data
+- **Tools available**: ALL tools including `trademark_search_by_wordmark`
+- **Use case**: Search trademarks by name/text, find similar marks
+
+The server automatically detects which mode to use based on whether `TRADEMARK_DB_URL` is set.
 
 ## Installation
-
-### Installing via Smithery
-
-To install trademark-mcp-server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@jordanburke/trademark-mcp-server):
-
-```bash
-npx -y @smithery/cli install @jordanburke/trademark-mcp-server --client claude
-```
 
 ### Manual Installation
 ```bash
@@ -34,7 +54,7 @@ pnpm build
 
 **Important**: The USPTO TSDR API requires an API key since October 2020. You must:
 
-1. **Register** at [USPTO Developer Portal](https://developer.uspto.gov/)
+1. **Register** at [USPTO Open Data Portal](https://data.uspto.gov/)
 2. **Get your API key** from your account dashboard  
 3. **Set environment variable**: `USPTO_API_KEY=your_api_key_here`
 
@@ -91,52 +111,11 @@ PORT=8080 pnpm serve
 
 The HTTP server provides:
 - Health check: `http://localhost:3000/health`
-- Server info: `http://localhost:3000/`
-- MCP endpoint: `http://localhost:3001/mcp` (FastMCP on port+1)
+- MCP endpoint: `http://localhost:3000/mcp`
 
 ## 🐳 Docker Support
 
 ### Quick Start with Docker
-
-Run the trademark server as a Docker container:
-
-```bash
-# Pull and run from GitHub Container Registry
-docker run -d \
-  --name trademark-mcp-server \
-  -p 3000:3000 \
-  -e USPTO_API_KEY=your_api_key_here \
-  ghcr.io/jordanburke/trademark-mcp-server:latest
-```
-
-### Docker Compose
-
-Create a `docker-compose.yml` file:
-
-```yaml
-version: '3.8'
-services:
-  trademark-mcp-server:
-    image: ghcr.io/jordanburke/trademark-mcp-server:latest
-    ports:
-      - "3000:3000"
-    environment:
-      - USPTO_API_KEY=your_api_key_here
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-```
-
-Then run:
-
-```bash
-docker-compose up -d
-```
-
-### Building Docker Image Locally
 
 ```bash
 # Build the image
@@ -177,7 +156,7 @@ cd scripts/
 
 The interactive wizard will guide you through:
 
-1. **USPTO API Key** - Get one at [developer.uspto.gov](https://developer.uspto.gov)
+1. **USPTO API Key** - Get one at [data.uspto.gov](https://data.uspto.gov)
 2. **Database Setup** - Use Docker (recommended) or an existing PostgreSQL
 3. **Data Selection** - Choose what to import:
    - Daily updates only (recent filings)
@@ -285,6 +264,15 @@ The inspector allows you to:
 - **Debug issues** with detailed logging
 - **Validate** MCP protocol compliance
 
+## Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `USPTO_API_KEY` | Yes | API key from [data.uspto.gov](https://data.uspto.gov) |
+| `TRADEMARK_DB_URL` | No | PostgreSQL connection string for wordmark searches |
+| `PORT` | No | HTTP server port (default: 3000) |
+| `HOST` | No | HTTP server host (default: 0.0.0.0) |
+
 ## API Endpoints Used
 
 This server uses the USPTO TSDR (Trademark Status & Document Retrieval) API:
@@ -297,7 +285,7 @@ This server uses the USPTO TSDR (Trademark Status & Document Retrieval) API:
 
 ### Getting an API Key
 
-1. Visit [USPTO Developer Portal](https://developer.uspto.gov/)
+1. Visit [USPTO Open Data Portal](https://data.uspto.gov/)
 2. Create an account or log in
 3. Navigate to your account dashboard
 4. Generate a new API key for TSDR access
@@ -426,5 +414,5 @@ MIT
 ## API Reference
 
 For more information about the USPTO TSDR API, visit:
-- [USPTO Developer Portal](https://developer.uspto.gov/api-catalog/tsdr-data-api)
-- [TSDR API Swagger Documentation](https://developer.uspto.gov/swagger/tsdr-api-v1)
+- [USPTO Open Data Portal](https://data.uspto.gov/)
+- [TSDR API Documentation](https://data.uspto.gov/apis/tsdr)
