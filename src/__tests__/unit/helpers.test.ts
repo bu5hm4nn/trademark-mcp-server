@@ -3,7 +3,12 @@
  * Tests the getHeaders, checkApiKey, and getPostgresPool functions
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
+import { createRequire } from "module"
 import { createMockPgModule } from "../mocks/pg-mock.js"
+
+// Import package.json for version verification
+const require = createRequire(import.meta.url)
+const pkg = require("../../../package.json")
 
 describe("Helper Functions", () => {
   let originalEnv: typeof process.env
@@ -31,7 +36,7 @@ describe("Helper Functions", () => {
 
       const headers = getHeaders(deps)
 
-      expect(headers["User-Agent"]).toBe("trademark-mcp-server/1.0.0")
+      expect(headers["User-Agent"]).toBe(`${pkg.name}/${pkg.version}`)
       expect(headers["USPTO-API-KEY"]).toBe("test-api-key")
     })
 
@@ -39,7 +44,7 @@ describe("Helper Functions", () => {
       process.env.USPTO_API_KEY = "my-api-key"
 
       const headers: Record<string, string> = {
-        "User-Agent": "trademark-mcp-server/1.0.0",
+        "User-Agent": `${pkg.name}/${pkg.version}`,
       }
 
       if (process.env.USPTO_API_KEY) {
@@ -53,7 +58,7 @@ describe("Helper Functions", () => {
       delete process.env.USPTO_API_KEY
 
       const headers: Record<string, string> = {
-        "User-Agent": "trademark-mcp-server/1.0.0",
+        "User-Agent": `${pkg.name}/${pkg.version}`,
       }
 
       if (process.env.USPTO_API_KEY) {

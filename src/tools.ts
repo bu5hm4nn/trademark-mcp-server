@@ -3,6 +3,11 @@
  * Exported separately for testability
  */
 
+// Import version from package.json for User-Agent header
+import { createRequire } from "module"
+const require = createRequire(import.meta.url)
+const { name, version } = require("../package.json")
+
 // Base TSDR API URL
 export const TSDR_BASE_URL = "https://tsdrapi.uspto.gov/ts/cd"
 
@@ -67,7 +72,7 @@ export async function getPostgresPool(deps: ToolDependencies = defaultDependenci
  */
 export function getHeaders(deps: ToolDependencies = defaultDependencies): Record<string, string> {
   const headers: Record<string, string> = {
-    "User-Agent": "trademark-mcp-server/1.0.0",
+    "User-Agent": `${name}/${version}`,
   }
 
   const apiKey = deps.getApiKey()
