@@ -9,7 +9,7 @@ export default defineConfig({
     exclude: ["node_modules", "dist", "src/__tests__/live/**"],
     coverage: {
       provider: "v8",
-      reporter: ["text", "html", "lcov"],
+      reporter: ["text", "json-summary", "html", "lcov"],
       include: ["src/**/*.ts"],
       exclude: [
         "src/__tests__/**",
