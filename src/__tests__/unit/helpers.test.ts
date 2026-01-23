@@ -20,26 +20,19 @@ describe("Helper Functions", () => {
 
   describe("getHeaders", () => {
     it("includes User-Agent header", async () => {
-      process.env.USPTO_API_KEY = "test-api-key"
+      const { getHeaders } = await import("../../tools.js")
 
-      // The getHeaders function is internal to index.ts
-      // We test it indirectly by checking fetch calls include proper headers
-      const mockFetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({}),
-      })
-      global.fetch = mockFetch
-
-      const { default: server } = await import("../../index.js")
-      expect(server).toBeDefined()
-
-      // Expected headers
-      const expectedHeaders = {
-        "User-Agent": "trademark-mcp-server/1.0.0",
-        "USPTO-API-KEY": "test-api-key",
+      const deps = {
+        getApiKey: () => "test-api-key",
+        getDbUrl: () => undefined,
+        fetchFn: vi.fn(),
+        pgImport: vi.fn(),
       }
 
-      expect(expectedHeaders["User-Agent"]).toBe("trademark-mcp-server/1.0.0")
+      const headers = getHeaders(deps)
+
+      expect(headers["User-Agent"]).toBe("trademark-mcp-server/1.0.0")
+      expect(headers["USPTO-API-KEY"]).toBe("test-api-key")
     })
 
     it("includes USPTO-API-KEY when configured", async () => {

@@ -55,7 +55,8 @@ export async function getPostgresPool(deps: ToolDependencies = defaultDependenci
     pgPool = new pg.default.Pool({ connectionString: dbUrl })
     pgAvailable = true
     return pgPool
-  } catch {
+  } catch (error) {
+    console.error("Failed to initialize PostgreSQL pool:", error)
     pgAvailable = false
     return null
   }
@@ -166,7 +167,7 @@ export async function searchByWordmark(
 
       return `🔍 **Trademark Search Results for: "${args.wordmark}"** (status: ${args.status})\n\nFound ${result.rows.length} result(s):\n\n${results}\n\n---\nUse \`trademark_search_by_serial\` with a serial number to get full USPTO details.`
     } catch (error) {
-      return `Error searching trademark database: ${error instanceof Error ? error.message : String(error)}\n\nFallback: Visit https://tmsearch.uspto.gov to search manually.`
+      return `Error searching trademark database: ${error instanceof Error ? error.message : String(error)}\n\nFallback: Visit ${TESS_SEARCH_URL} to search manually.`
     }
   }
 
@@ -212,8 +213,7 @@ export async function searchBySerial(
     })
 
     if (!response.ok) {
-      const errorText = await response.text()
-      if (errorText.includes("need to register for an API key")) {
+      if (response.status === 401) {
         throw new Error(`🔑 USPTO API Authentication Issue
 
 The USPTO TSDR API is rejecting our API key. This could be due to:
@@ -231,6 +231,7 @@ The USPTO TSDR API is rejecting our API key. This could be due to:
 
 **Alternative**: Try bulk data download endpoints if available.`)
       }
+      const errorText = await response.text()
       throw new Error(`USPTO API returned ${response.status}: ${response.statusText}. Error: ${errorText}`)
     }
 
@@ -265,8 +266,7 @@ export async function getTrademarkStatus(
     })
 
     if (!response.ok) {
-      const errorText = await response.text()
-      if (errorText.includes("need to register for an API key")) {
+      if (response.status === 401) {
         throw new Error(`🔑 USPTO API Authentication Issue
 
 The USPTO TSDR API is rejecting our API key.
@@ -276,6 +276,7 @@ The USPTO TSDR API is rejecting our API key.
 **Next Steps**:
 • Contact USPTO support: APIhelp@uspto.gov`)
       }
+      const errorText = await response.text()
       throw new Error(`USPTO API returned ${response.status}: ${response.statusText}. Error: ${errorText}`)
     }
 
@@ -357,8 +358,7 @@ export async function searchByRegistration(
     })
 
     if (!response.ok) {
-      const errorText = await response.text()
-      if (errorText.includes("need to register for an API key")) {
+      if (response.status === 401) {
         throw new Error(`🔑 USPTO API Authentication Issue
 
 The USPTO TSDR API is rejecting our API key.
@@ -368,6 +368,7 @@ The USPTO TSDR API is rejecting our API key.
 **Next Steps**:
 • Contact USPTO support: APIhelp@uspto.gov`)
       }
+      const errorText = await response.text()
       throw new Error(`USPTO API returned ${response.status}: ${response.statusText}. Error: ${errorText}`)
     }
 
