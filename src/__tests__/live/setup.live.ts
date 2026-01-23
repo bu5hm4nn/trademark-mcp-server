@@ -29,16 +29,18 @@ async function canConnectToDatabase(): Promise<boolean> {
     return false
   }
 
+  let pool
   try {
     const pg = await import("pg")
-    const pool = new pg.default.Pool({
+    pool = new pg.default.Pool({
       connectionString: LIVE_DB_URL,
       connectionTimeoutMillis: 5000, // 5 second timeout
     })
 
-    // Try a simple query
-    await pool.query("SELECT 1")
-    await pool.end()
+    // Try to get a client and run a simple query
+    const client = await pool.connect()
+    await client.query("SELECT 1")
+    client.release()
 
     connectionTestResult = true
     return true
@@ -46,6 +48,10 @@ async function canConnectToDatabase(): Promise<boolean> {
     console.log("Live database not accessible - tests will be skipped")
     connectionTestResult = false
     return false
+  } finally {
+    if (pool) {
+      await pool.end()
+    }
   }
 }
 
