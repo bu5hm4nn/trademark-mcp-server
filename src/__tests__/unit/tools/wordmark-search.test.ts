@@ -2,10 +2,9 @@
  * Unit tests for trademark_search_by_wordmark tool
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { createMockPool, createMockPgModule } from "../../mocks/pg-mock.js"
+import { createMockPgModule } from "../../mocks/pg-mock.js"
 import {
   sampleTrademarks,
-  fuzzyMatchRecords,
   specialCharacterRecords,
   emptyDbResult,
   searchResultsWithScores,
@@ -53,9 +52,7 @@ describe("trademark_search_by_wordmark", () => {
     it("filters by active status when requested", async () => {
       process.env.TRADEMARK_DB_URL = "postgresql://test:test@localhost:5432/trademarks"
 
-      const activeRecords = sampleTrademarks.filter(
-        (r) => r.status_code === "LIVE" || r.status_code === "REGISTERED"
-      )
+      const activeRecords = sampleTrademarks.filter((r) => r.status_code === "LIVE" || r.status_code === "REGISTERED")
 
       const mockPg = createMockPgModule({
         queryResults: {

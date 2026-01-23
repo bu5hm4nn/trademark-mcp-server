@@ -2,15 +2,8 @@
  * Unit tests for trademark_search_by_registration tool
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import {
-  createFetchMock,
-  mockResponses,
-  createSuccessResponse,
-} from "../../mocks/fetch-mock.js"
-import {
-  registrationNumberJsonResponse,
-  serialNumberXmlResponse,
-} from "../../fixtures/api-responses.js"
+import { createFetchMock, mockResponses, createSuccessResponse } from "../../mocks/fetch-mock.js"
+import { registrationNumberJsonResponse, serialNumberXmlResponse } from "../../fixtures/api-responses.js"
 
 describe("trademark_search_by_registration", () => {
   let originalEnv: typeof process.env
@@ -40,9 +33,7 @@ describe("trademark_search_by_registration", () => {
       const { default: server } = await import("../../../index.js")
       expect(server).toBeDefined()
 
-      const response = await fetch(
-        "https://tsdrapi.uspto.gov/ts/cd/casestatus/rn0978952/info.json"
-      )
+      const response = await fetch("https://tsdrapi.uspto.gov/ts/cd/casestatus/rn0978952/info.json")
       expect(response.ok).toBe(true)
 
       const data = await response.json()
@@ -61,9 +52,7 @@ describe("trademark_search_by_registration", () => {
       const { default: server } = await import("../../../index.js")
       expect(server).toBeDefined()
 
-      const response = await fetch(
-        "https://tsdrapi.uspto.gov/ts/cd/casestatus/rn3068631/info.xml"
-      )
+      const response = await fetch("https://tsdrapi.uspto.gov/ts/cd/casestatus/rn3068631/info.xml")
       const xmlData = await response.text()
 
       expect(xmlData).toContain("<?xml")
@@ -78,9 +67,7 @@ describe("trademark_search_by_registration", () => {
       })
       globalThis.fetch = mockFetch
 
-      const response = await fetch(
-        "https://tsdrapi.uspto.gov/ts/cd/casestatus/rn1234567/info.json"
-      )
+      const response = await fetch("https://tsdrapi.uspto.gov/ts/cd/casestatus/rn1234567/info.json")
       expect(response.ok).toBe(true)
     })
 
@@ -92,9 +79,7 @@ describe("trademark_search_by_registration", () => {
       })
       globalThis.fetch = mockFetch
 
-      const response = await fetch(
-        "https://tsdrapi.uspto.gov/ts/cd/casestatus/rn12345678/info.json"
-      )
+      const response = await fetch("https://tsdrapi.uspto.gov/ts/cd/casestatus/rn12345678/info.json")
       expect(response.ok).toBe(true)
     })
   })
@@ -140,9 +125,7 @@ describe("trademark_search_by_registration", () => {
       })
       globalThis.fetch = mockFetch
 
-      const response = await fetch(
-        "https://tsdrapi.uspto.gov/ts/cd/casestatus/rn3068631/info.json"
-      )
+      const response = await fetch("https://tsdrapi.uspto.gov/ts/cd/casestatus/rn3068631/info.json")
       expect(response.ok).toBe(false)
       expect(response.status).toBe(401)
     })
@@ -155,9 +138,7 @@ describe("trademark_search_by_registration", () => {
       })
       globalThis.fetch = mockFetch
 
-      const response = await fetch(
-        "https://tsdrapi.uspto.gov/ts/cd/casestatus/rn0000000/info.json"
-      )
+      const response = await fetch("https://tsdrapi.uspto.gov/ts/cd/casestatus/rn0000000/info.json")
       expect(response.ok).toBe(false)
       expect(response.status).toBe(404)
     })
@@ -168,9 +149,9 @@ describe("trademark_search_by_registration", () => {
       const mockFetch = vi.fn().mockRejectedValue(new Error("Network error"))
       globalThis.fetch = mockFetch
 
-      await expect(
-        fetch("https://tsdrapi.uspto.gov/ts/cd/casestatus/rn3068631/info.json")
-      ).rejects.toThrow("Network error")
+      await expect(fetch("https://tsdrapi.uspto.gov/ts/cd/casestatus/rn3068631/info.json")).rejects.toThrow(
+        "Network error",
+      )
     })
   })
 
@@ -180,9 +161,7 @@ describe("trademark_search_by_registration", () => {
       const registrationNumber = "3068631"
       const expectedUrl = `${baseUrl}/casestatus/rn${registrationNumber}/info.json`
 
-      expect(expectedUrl).toBe(
-        "https://tsdrapi.uspto.gov/ts/cd/casestatus/rn3068631/info.json"
-      )
+      expect(expectedUrl).toBe("https://tsdrapi.uspto.gov/ts/cd/casestatus/rn3068631/info.json")
     })
 
     it("uses rn prefix for registration numbers", () => {

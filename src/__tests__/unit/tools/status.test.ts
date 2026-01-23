@@ -2,12 +2,8 @@
  * Unit tests for trademark_status tool
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import {
-  createFetchMock,
-  mockResponses,
-  createSuccessResponse,
-} from "../../mocks/fetch-mock.js"
-import { statusHtmlResponse, apiKeyMissingErrorResponse } from "../../fixtures/api-responses.js"
+import { createFetchMock, mockResponses, createSuccessResponse } from "../../mocks/fetch-mock.js"
+import { statusHtmlResponse } from "../../fixtures/api-responses.js"
 
 describe("trademark_status", () => {
   let originalEnv: typeof process.env
@@ -37,9 +33,7 @@ describe("trademark_status", () => {
       const { default: server } = await import("../../../index.js")
       expect(server).toBeDefined()
 
-      const response = await fetch(
-        "https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/content"
-      )
+      const response = await fetch("https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/content")
       expect(response.ok).toBe(true)
 
       const htmlContent = await response.text()
@@ -55,9 +49,7 @@ describe("trademark_status", () => {
       })
       globalThis.fetch = mockFetch
 
-      const response = await fetch(
-        "https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/content"
-      )
+      const response = await fetch("https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/content")
       const htmlContent = await response.text()
 
       // Extract title using regex (same as implementation)
@@ -75,9 +67,7 @@ describe("trademark_status", () => {
       })
       globalThis.fetch = mockFetch
 
-      const response = await fetch(
-        "https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/content"
-      )
+      const response = await fetch("https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/content")
       const htmlContent = await response.text()
 
       expect(htmlContent).toContain("78462704")
@@ -100,7 +90,7 @@ describe("trademark_status", () => {
       const result = await getTrademarkStatus({ serialNumber: "12345678" }, deps)
 
       expect(result).toBe(
-        "❌ USPTO API key not configured. Please set the USPTO_API_KEY environment variable with your API key from https://account.uspto.gov/api-manager/"
+        "❌ USPTO API key not configured. Please set the USPTO_API_KEY environment variable with your API key from https://account.uspto.gov/api-manager/",
       )
     })
 
@@ -112,9 +102,7 @@ describe("trademark_status", () => {
       })
       globalThis.fetch = mockFetch
 
-      const response = await fetch(
-        "https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/content"
-      )
+      const response = await fetch("https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/content")
       expect(response.ok).toBe(false)
       expect(response.status).toBe(401)
 
@@ -130,9 +118,7 @@ describe("trademark_status", () => {
       })
       globalThis.fetch = mockFetch
 
-      const response = await fetch(
-        "https://tsdrapi.uspto.gov/ts/cd/casestatus/sn00000000/content"
-      )
+      const response = await fetch("https://tsdrapi.uspto.gov/ts/cd/casestatus/sn00000000/content")
       expect(response.ok).toBe(false)
       expect(response.status).toBe(404)
     })
@@ -143,9 +129,9 @@ describe("trademark_status", () => {
       const mockFetch = vi.fn().mockRejectedValue(new Error("Connection refused"))
       globalThis.fetch = mockFetch
 
-      await expect(
-        fetch("https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/content")
-      ).rejects.toThrow("Connection refused")
+      await expect(fetch("https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/content")).rejects.toThrow(
+        "Connection refused",
+      )
     })
   })
 
@@ -155,9 +141,7 @@ describe("trademark_status", () => {
       const serialNumber = "78462704"
       const expectedUrl = `${baseUrl}/casestatus/sn${serialNumber}/content`
 
-      expect(expectedUrl).toBe(
-        "https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/content"
-      )
+      expect(expectedUrl).toBe("https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/content")
     })
 
     it("uses /content endpoint for status", () => {
@@ -183,9 +167,7 @@ describe("trademark_status", () => {
       })
       globalThis.fetch = mockFetch
 
-      const response = await fetch(
-        "https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/content"
-      )
+      const response = await fetch("https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/content")
       const htmlContent = await response.text()
 
       const titleMatch = htmlContent.match(/<title>(.*?)<\/title>/i)
@@ -204,9 +186,7 @@ describe("trademark_status", () => {
       })
       globalThis.fetch = mockFetch
 
-      const response = await fetch(
-        "https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/content"
-      )
+      const response = await fetch("https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/content")
       const htmlContent = await response.text()
 
       expect(htmlContent).toBeDefined()

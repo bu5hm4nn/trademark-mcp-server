@@ -4,11 +4,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { createMockPgModule } from "../mocks/pg-mock.js"
-import {
-  createFetchMock,
-  createSuccessResponse,
-  mockResponses,
-} from "../mocks/fetch-mock.js"
+import { createFetchMock, createSuccessResponse, mockResponses } from "../mocks/fetch-mock.js"
 import {
   serialNumberJsonResponse,
   registrationNumberJsonResponse,
@@ -85,9 +81,7 @@ describe("End-to-End Trademark Search", () => {
       expect(server).toBeDefined()
 
       // Simulate API call
-      const response = await fetch(
-        "https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/info.json"
-      )
+      const response = await fetch("https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/info.json")
       expect(response.ok).toBe(true)
 
       const data = await response.json()
@@ -112,10 +106,9 @@ describe("End-to-End Trademark Search", () => {
       globalThis.fetch = mockFetch
 
       const { default: server } = await import("../../index.js")
+      expect(server).toBeDefined()
 
-      const response = await fetch(
-        "https://tsdrapi.uspto.gov/ts/cd/casestatus/sn00000000/info.json"
-      )
+      const response = await fetch("https://tsdrapi.uspto.gov/ts/cd/casestatus/sn00000000/info.json")
       expect(response.ok).toBe(false)
       expect(response.status).toBe(404)
     })
@@ -133,9 +126,7 @@ describe("End-to-End Trademark Search", () => {
       const { default: server } = await import("../../index.js")
       expect(server).toBeDefined()
 
-      const response = await fetch(
-        "https://tsdrapi.uspto.gov/ts/cd/casestatus/rn0978952/info.json"
-      )
+      const response = await fetch("https://tsdrapi.uspto.gov/ts/cd/casestatus/rn0978952/info.json")
       expect(response.ok).toBe(true)
 
       const data = await response.json()
@@ -153,16 +144,15 @@ describe("End-to-End Trademark Search", () => {
       globalThis.fetch = mockFetch
 
       const { default: server } = await import("../../index.js")
+      expect(server).toBeDefined()
 
-      const response = await fetch(
-        "https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/content"
-      )
+      const response = await fetch("https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/content")
       const html = await response.text()
 
       // Extract title
       const titleMatch = html.match(/<title>(.*?)<\/title>/i)
       expect(titleMatch).not.toBeNull()
-      expect(titleMatch![1]).toContain("APPLE")
+      expect(titleMatch?.[1]).toContain("APPLE")
     })
   })
 
@@ -178,6 +168,7 @@ describe("End-to-End Trademark Search", () => {
       globalThis.fetch = mockFetch
 
       const { default: server } = await import("../../index.js")
+      expect(server).toBeDefined()
 
       const imageUrl = "https://tsdrapi.uspto.gov/ts/cd/rawImage/78462704"
       const response = await fetch(imageUrl, { method: "HEAD" })
@@ -195,10 +186,7 @@ describe("End-to-End Trademark Search", () => {
       })
       globalThis.fetch = mockFetch
 
-      const response = await fetch(
-        "https://tsdrapi.uspto.gov/ts/cd/rawImage/00000000",
-        { method: "HEAD" }
-      )
+      const response = await fetch("https://tsdrapi.uspto.gov/ts/cd/rawImage/00000000", { method: "HEAD" })
 
       expect(response.ok).toBe(false)
     })
@@ -209,6 +197,7 @@ describe("End-to-End Trademark Search", () => {
       process.env.USPTO_API_KEY = "test-api-key"
 
       const { default: server } = await import("../../index.js")
+      expect(server).toBeDefined()
 
       const serialNumber = "78462704"
       const documentUrl = `https://tsdrapi.uspto.gov/ts/cd/casedocs/bundle.pdf?sn=${serialNumber}`
@@ -236,6 +225,7 @@ describe("End-to-End Trademark Search", () => {
       globalThis.fetch = mockFetch
 
       const { default: server } = await import("../../index.js")
+      expect(server).toBeDefined()
 
       // Simulate workflow
       const firstResult = searchResultsWithScores[0]
@@ -243,7 +233,7 @@ describe("End-to-End Trademark Search", () => {
 
       // Look up details for first result
       const response = await fetch(
-        `https://tsdrapi.uspto.gov/ts/cd/casestatus/sn${firstResult.serial_number}/info.json`
+        `https://tsdrapi.uspto.gov/ts/cd/casestatus/sn${firstResult.serial_number}/info.json`,
       )
       expect(response.ok).toBe(true)
     })
@@ -257,11 +247,7 @@ describe("End-to-End Trademark Search", () => {
       expect(server).toBeDefined()
 
       // Multiple tool calls in same session
-      const tools = [
-        "trademark_search_by_wordmark",
-        "trademark_search_by_serial",
-        "trademark_status",
-      ]
+      const tools = ["trademark_search_by_wordmark", "trademark_search_by_serial", "trademark_status"]
 
       expect(tools.length).toBe(3)
     })
@@ -286,15 +272,11 @@ describe("End-to-End Trademark Search", () => {
       globalThis.fetch = mockFetch
 
       // First call fails
-      const response1 = await fetch(
-        "https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/info.json"
-      )
+      const response1 = await fetch("https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/info.json")
       expect(response1.ok).toBe(false)
 
       // Second call succeeds
-      const response2 = await fetch(
-        "https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/info.json"
-      )
+      const response2 = await fetch("https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/info.json")
       expect(response2.ok).toBe(true)
     })
 
@@ -326,10 +308,11 @@ describe("Performance Scenarios", () => {
     globalThis.fetch = mockFetch
 
     const { default: server } = await import("../../index.js")
+    expect(server).toBeDefined()
 
     // Simulate multiple rapid requests
     const requests = Array.from({ length: 10 }, (_, i) =>
-      fetch(`https://tsdrapi.uspto.gov/ts/cd/casestatus/sn7846270${i}/info.json`)
+      fetch(`https://tsdrapi.uspto.gov/ts/cd/casestatus/sn7846270${i}/info.json`),
     )
 
     const responses = await Promise.all(requests)

@@ -13,7 +13,7 @@ import {
   resetPoolState,
   type ToolDependencies,
 } from "../../../tools.js"
-import { searchResultsWithScores, sampleTrademarks } from "../../fixtures/db-records.js"
+import { searchResultsWithScores } from "../../fixtures/db-records.js"
 import { serialNumberJsonResponse, statusHtmlResponse } from "../../fixtures/api-responses.js"
 
 describe("Tool Execution Tests", () => {
@@ -45,10 +45,7 @@ describe("Tool Execution Tests", () => {
         pgImport: mockPgImport,
       }
 
-      const result = await searchByWordmark(
-        { wordmark: "SUNSHINE", status: "all", limit: 20 },
-        deps
-      )
+      const result = await searchByWordmark({ wordmark: "SUNSHINE", status: "all", limit: 20 }, deps)
 
       // Verify the query was executed
       expect(mockQuery).toHaveBeenCalled()
@@ -68,9 +65,7 @@ describe("Tool Execution Tests", () => {
 
     it("filters by active status when requested", async () => {
       const mockQuery = vi.fn().mockResolvedValue({
-        rows: searchResultsWithScores.filter(
-          (r) => r.status_code === "LIVE" || r.status_code === "REGISTERED"
-        ),
+        rows: searchResultsWithScores.filter((r) => r.status_code === "LIVE" || r.status_code === "REGISTERED"),
       })
 
       const mockPool = { query: mockQuery }
@@ -87,10 +82,7 @@ describe("Tool Execution Tests", () => {
         pgImport: mockPgImport,
       }
 
-      await searchByWordmark(
-        { wordmark: "SUNSHINE", status: "active", limit: 20 },
-        deps
-      )
+      await searchByWordmark({ wordmark: "SUNSHINE", status: "active", limit: 20 }, deps)
 
       // Verify the query includes status filter
       const [query] = mockQuery.mock.calls[0]
@@ -113,10 +105,7 @@ describe("Tool Execution Tests", () => {
         pgImport: mockPgImport,
       }
 
-      const result = await searchByWordmark(
-        { wordmark: "NONEXISTENT", status: "all", limit: 20 },
-        deps
-      )
+      const result = await searchByWordmark({ wordmark: "NONEXISTENT", status: "all", limit: 20 }, deps)
 
       expect(result).toContain("No trademarks found matching")
       expect(result).toContain("NONEXISTENT")
@@ -130,10 +119,7 @@ describe("Tool Execution Tests", () => {
         pgImport: vi.fn(),
       }
 
-      const result = await searchByWordmark(
-        { wordmark: "APPLE", status: "all", limit: 20 },
-        deps
-      )
+      const result = await searchByWordmark({ wordmark: "APPLE", status: "all", limit: 20 }, deps)
 
       expect(result).toContain("Local trademark database not configured")
       expect(result).toContain("TESS Search Link")
@@ -156,10 +142,7 @@ describe("Tool Execution Tests", () => {
         pgImport: mockPgImport,
       }
 
-      const result = await searchByWordmark(
-        { wordmark: "APPLE", status: "all", limit: 20 },
-        deps
-      )
+      const result = await searchByWordmark({ wordmark: "APPLE", status: "all", limit: 20 }, deps)
 
       expect(result).toContain("Error searching trademark database")
       expect(result).toContain("Connection timeout")
@@ -185,10 +168,7 @@ describe("Tool Execution Tests", () => {
         pgImport: mockPgImport,
       }
 
-      await searchByWordmark(
-        { wordmark: "SUNSHINE", status: "all", limit: 5 },
-        deps
-      )
+      await searchByWordmark({ wordmark: "SUNSHINE", status: "all", limit: 5 }, deps)
 
       const [, params] = mockQuery.mock.calls[0]
       expect(params[1]).toBe(5)
@@ -209,10 +189,7 @@ describe("Tool Execution Tests", () => {
         pgImport: vi.fn(),
       }
 
-      const result = await searchBySerial(
-        { serialNumber: "78462704", format: "json" },
-        deps
-      )
+      const result = await searchBySerial({ serialNumber: "78462704", format: "json" }, deps)
 
       // Verify fetch was called with correct URL
       expect(mockFetch).toHaveBeenCalledWith(
@@ -221,7 +198,7 @@ describe("Tool Execution Tests", () => {
           headers: expect.objectContaining({
             "USPTO-API-KEY": "test-api-key",
           }),
-        })
+        }),
       )
 
       // Verify result contains JSON data
@@ -244,15 +221,9 @@ describe("Tool Execution Tests", () => {
         pgImport: vi.fn(),
       }
 
-      const result = await searchBySerial(
-        { serialNumber: "78462704", format: "xml" },
-        deps
-      )
+      const result = await searchBySerial({ serialNumber: "78462704", format: "xml" }, deps)
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining("info.xml"),
-        expect.any(Object)
-      )
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining("info.xml"), expect.any(Object))
       expect(result).toBe(xmlResponse)
     })
 
@@ -264,10 +235,7 @@ describe("Tool Execution Tests", () => {
         pgImport: vi.fn(),
       }
 
-      const result = await searchBySerial(
-        { serialNumber: "78462704", format: "json" },
-        deps
-      )
+      const result = await searchBySerial({ serialNumber: "78462704", format: "json" }, deps)
 
       expect(result).toContain("USPTO API key not configured")
     })
@@ -287,10 +255,7 @@ describe("Tool Execution Tests", () => {
         pgImport: vi.fn(),
       }
 
-      const result = await searchBySerial(
-        { serialNumber: "00000000", format: "json" },
-        deps
-      )
+      const result = await searchBySerial({ serialNumber: "00000000", format: "json" }, deps)
 
       expect(result).toContain("Error fetching trademark data")
       expect(result).toContain("404")
@@ -311,10 +276,7 @@ describe("Tool Execution Tests", () => {
         pgImport: vi.fn(),
       }
 
-      const result = await searchBySerial(
-        { serialNumber: "78462704", format: "json" },
-        deps
-      )
+      const result = await searchBySerial({ serialNumber: "78462704", format: "json" }, deps)
 
       expect(result).toContain("Error fetching trademark data")
       expect(result).toContain("USPTO API Authentication Issue")
@@ -330,10 +292,7 @@ describe("Tool Execution Tests", () => {
         pgImport: vi.fn(),
       }
 
-      const result = await searchBySerial(
-        { serialNumber: "78462704", format: "json" },
-        deps
-      )
+      const result = await searchBySerial({ serialNumber: "78462704", format: "json" }, deps)
 
       expect(result).toContain("Error fetching trademark data")
       expect(result).toContain("Connection refused")
@@ -354,14 +313,11 @@ describe("Tool Execution Tests", () => {
         pgImport: vi.fn(),
       }
 
-      const result = await searchByRegistration(
-        { registrationNumber: "3068631", format: "json" },
-        deps
-      )
+      const result = await searchByRegistration({ registrationNumber: "3068631", format: "json" }, deps)
 
       expect(mockFetch).toHaveBeenCalledWith(
         "https://tsdrapi.uspto.gov/ts/cd/casestatus/rn3068631/info.json",
-        expect.any(Object)
+        expect.any(Object),
       )
 
       const parsed = JSON.parse(result)
@@ -382,15 +338,9 @@ describe("Tool Execution Tests", () => {
         pgImport: vi.fn(),
       }
 
-      const result = await searchByRegistration(
-        { registrationNumber: "3068631", format: "xml" },
-        deps
-      )
+      const result = await searchByRegistration({ registrationNumber: "3068631", format: "xml" }, deps)
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining("info.xml"),
-        expect.any(Object)
-      )
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining("info.xml"), expect.any(Object))
       expect(result).toBe(xmlResponse)
     })
 
@@ -402,10 +352,7 @@ describe("Tool Execution Tests", () => {
         pgImport: vi.fn(),
       }
 
-      const result = await searchByRegistration(
-        { registrationNumber: "3068631", format: "json" },
-        deps
-      )
+      const result = await searchByRegistration({ registrationNumber: "3068631", format: "json" }, deps)
 
       expect(result).toContain("USPTO API key not configured")
     })
@@ -425,10 +372,7 @@ describe("Tool Execution Tests", () => {
         pgImport: vi.fn(),
       }
 
-      const result = await searchByRegistration(
-        { registrationNumber: "3068631", format: "json" },
-        deps
-      )
+      const result = await searchByRegistration({ registrationNumber: "3068631", format: "json" }, deps)
 
       expect(result).toContain("Error fetching trademark data")
       expect(result).toContain("USPTO API Authentication Issue")
@@ -449,10 +393,7 @@ describe("Tool Execution Tests", () => {
         pgImport: vi.fn(),
       }
 
-      const result = await searchByRegistration(
-        { registrationNumber: "3068631", format: "json" },
-        deps
-      )
+      const result = await searchByRegistration({ registrationNumber: "3068631", format: "json" }, deps)
 
       expect(result).toContain("Error fetching trademark data")
       expect(result).toContain("500")
@@ -468,10 +409,7 @@ describe("Tool Execution Tests", () => {
         pgImport: vi.fn(),
       }
 
-      const result = await searchByRegistration(
-        { registrationNumber: "3068631", format: "json" },
-        deps
-      )
+      const result = await searchByRegistration({ registrationNumber: "3068631", format: "json" }, deps)
 
       expect(result).toContain("Error fetching trademark data by registration number")
       expect(result).toContain("Network error")
@@ -492,14 +430,11 @@ describe("Tool Execution Tests", () => {
         pgImport: vi.fn(),
       }
 
-      const result = await getTrademarkStatus(
-        { serialNumber: "78462704" },
-        deps
-      )
+      const result = await getTrademarkStatus({ serialNumber: "78462704" }, deps)
 
       expect(mockFetch).toHaveBeenCalledWith(
         "https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/content",
-        expect.any(Object)
+        expect.any(Object),
       )
 
       expect(result).toContain("Trademark Status Report")
@@ -514,10 +449,7 @@ describe("Tool Execution Tests", () => {
         pgImport: vi.fn(),
       }
 
-      const result = await getTrademarkStatus(
-        { serialNumber: "78462704" },
-        deps
-      )
+      const result = await getTrademarkStatus({ serialNumber: "78462704" }, deps)
 
       expect(result).toContain("USPTO API key not configured")
     })
@@ -537,10 +469,7 @@ describe("Tool Execution Tests", () => {
         pgImport: vi.fn(),
       }
 
-      const result = await getTrademarkStatus(
-        { serialNumber: "78462704" },
-        deps
-      )
+      const result = await getTrademarkStatus({ serialNumber: "78462704" }, deps)
 
       expect(result).toContain("Error fetching trademark status")
       expect(result).toContain("USPTO API Authentication Issue")
@@ -561,10 +490,7 @@ describe("Tool Execution Tests", () => {
         pgImport: vi.fn(),
       }
 
-      const result = await getTrademarkStatus(
-        { serialNumber: "78462704" },
-        deps
-      )
+      const result = await getTrademarkStatus({ serialNumber: "78462704" }, deps)
 
       expect(result).toContain("Error fetching trademark status")
       expect(result).toContain("500")
@@ -580,10 +506,7 @@ describe("Tool Execution Tests", () => {
         pgImport: vi.fn(),
       }
 
-      const result = await getTrademarkStatus(
-        { serialNumber: "78462704" },
-        deps
-      )
+      const result = await getTrademarkStatus({ serialNumber: "78462704" }, deps)
 
       expect(result).toContain("Error fetching trademark status")
       expect(result).toContain("Network timeout")
@@ -603,10 +526,7 @@ describe("Tool Execution Tests", () => {
         pgImport: vi.fn(),
       }
 
-      const result = await getTrademarkStatus(
-        { serialNumber: "78462704" },
-        deps
-      )
+      const result = await getTrademarkStatus({ serialNumber: "78462704" }, deps)
 
       expect(result).toContain("No title found")
     })
@@ -625,14 +545,11 @@ describe("Tool Execution Tests", () => {
         pgImport: vi.fn(),
       }
 
-      const result = await getTrademarkImage(
-        { serialNumber: "78462704" },
-        deps
-      )
+      const result = await getTrademarkImage({ serialNumber: "78462704" }, deps)
 
       expect(mockFetch).toHaveBeenCalledWith(
         "https://tsdrapi.uspto.gov/ts/cd/rawImage/78462704",
-        expect.objectContaining({ method: "HEAD" })
+        expect.objectContaining({ method: "HEAD" }),
       )
 
       expect(result).toContain("Trademark image URL")
@@ -651,10 +568,7 @@ describe("Tool Execution Tests", () => {
         pgImport: vi.fn(),
       }
 
-      const result = await getTrademarkImage(
-        { serialNumber: "00000000" },
-        deps
-      )
+      const result = await getTrademarkImage({ serialNumber: "00000000" }, deps)
 
       expect(result).toContain("No image found")
     })
@@ -667,10 +581,7 @@ describe("Tool Execution Tests", () => {
         pgImport: vi.fn(),
       }
 
-      const result = await getTrademarkImage(
-        { serialNumber: "78462704" },
-        deps
-      )
+      const result = await getTrademarkImage({ serialNumber: "78462704" }, deps)
 
       expect(result).toContain("USPTO API key not configured")
     })
@@ -685,10 +596,7 @@ describe("Tool Execution Tests", () => {
         pgImport: vi.fn(),
       }
 
-      const result = await getTrademarkImage(
-        { serialNumber: "78462704" },
-        deps
-      )
+      const result = await getTrademarkImage({ serialNumber: "78462704" }, deps)
 
       expect(result).toContain("Error retrieving trademark image")
       expect(result).toContain("Connection refused")
@@ -704,10 +612,7 @@ describe("Tool Execution Tests", () => {
         pgImport: vi.fn(),
       }
 
-      const result = await getTrademarkDocuments(
-        { serialNumber: "78462704" },
-        deps
-      )
+      const result = await getTrademarkDocuments({ serialNumber: "78462704" }, deps)
 
       expect(result).toContain("Document bundle URL")
       expect(result).toContain("bundle.pdf?sn=78462704")
@@ -722,10 +627,7 @@ describe("Tool Execution Tests", () => {
         pgImport: vi.fn(),
       }
 
-      const result = await getTrademarkDocuments(
-        { serialNumber: "78462704" },
-        deps
-      )
+      const result = await getTrademarkDocuments({ serialNumber: "78462704" }, deps)
 
       expect(result).toContain("USPTO API key not configured")
     })

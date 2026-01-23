@@ -127,7 +127,7 @@ export interface DocumentsArgs {
  */
 export async function searchByWordmark(
   args: WordmarkSearchArgs,
-  deps: ToolDependencies = defaultDependencies
+  deps: ToolDependencies = defaultDependencies,
 ): Promise<string> {
   const pool = await getPostgresPool(deps)
 
@@ -160,15 +160,17 @@ export async function searchByWordmark(
         return `No trademarks found matching "${args.wordmark}" (status: ${args.status}).`
       }
 
-      const results = result.rows.map((tm: any, index: number) => {
-        return `${index + 1}. **${tm.mark_identification || "N/A"}**
+      const results = result.rows
+        .map((tm: any, index: number) => {
+          return `${index + 1}. **${tm.mark_identification || "N/A"}**
    - Serial Number: ${tm.serial_number || "N/A"}
    - Registration Number: ${tm.registration_number || "N/A"}
    - Status: ${tm.status_code || "N/A"}
    - Filing Date: ${tm.filing_date || "N/A"}
    - Registration Date: ${tm.registration_date || "N/A"}
    - Similarity: ${(tm.sim_score * 100).toFixed(1)}%`
-      }).join("\n\n")
+        })
+        .join("\n\n")
 
       return `🔍 **Trademark Search Results for: "${args.wordmark}"** (status: ${args.status})\n\nFound ${result.rows.length} result(s):\n\n${results}\n\n---\nUse \`trademark_search_by_serial\` with a serial number to get full USPTO details.`
     } catch (error) {
@@ -202,7 +204,7 @@ export async function searchByWordmark(
  */
 export async function searchBySerial(
   args: SerialSearchArgs,
-  deps: ToolDependencies = defaultDependencies
+  deps: ToolDependencies = defaultDependencies,
 ): Promise<string> {
   const apiKeyError = checkApiKey(deps)
   if (apiKeyError) {
@@ -256,7 +258,7 @@ The USPTO TSDR API is rejecting our API key. This could be due to:
  */
 export async function getTrademarkStatus(
   args: StatusArgs,
-  deps: ToolDependencies = defaultDependencies
+  deps: ToolDependencies = defaultDependencies,
 ): Promise<string> {
   const apiKeyError = checkApiKey(deps)
   if (apiKeyError) {
@@ -300,7 +302,7 @@ The USPTO TSDR API is rejecting our API key.
  */
 export async function getTrademarkImage(
   args: ImageArgs,
-  deps: ToolDependencies = defaultDependencies
+  deps: ToolDependencies = defaultDependencies,
 ): Promise<string> {
   const apiKeyError = checkApiKey(deps)
   if (apiKeyError) {
@@ -330,7 +332,7 @@ export async function getTrademarkImage(
  */
 export async function getTrademarkDocuments(
   args: DocumentsArgs,
-  deps: ToolDependencies = defaultDependencies
+  deps: ToolDependencies = defaultDependencies,
 ): Promise<string> {
   const apiKeyError = checkApiKey(deps)
   if (apiKeyError) {
@@ -347,7 +349,7 @@ export async function getTrademarkDocuments(
  */
 export async function searchByRegistration(
   args: RegistrationSearchArgs,
-  deps: ToolDependencies = defaultDependencies
+  deps: ToolDependencies = defaultDependencies,
 ): Promise<string> {
   const apiKeyError = checkApiKey(deps)
   if (apiKeyError) {

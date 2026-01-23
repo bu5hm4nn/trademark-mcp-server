@@ -2,12 +2,7 @@
  * Unit tests for trademark_image tool
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import {
-  createFetchMock,
-  mockResponses,
-  createSuccessResponse,
-  createErrorResponse,
-} from "../../mocks/fetch-mock.js"
+import { createFetchMock, mockResponses } from "../../mocks/fetch-mock.js"
 
 describe("trademark_image", () => {
   let originalEnv: typeof process.env
@@ -49,14 +44,11 @@ describe("trademark_image", () => {
       const { default: server } = await import("../../../index.js")
       expect(server).toBeDefined()
 
-      const response = await fetch(
-        "https://tsdrapi.uspto.gov/ts/cd/rawImage/78462704",
-        { method: "HEAD" }
-      )
+      const response = await fetch("https://tsdrapi.uspto.gov/ts/cd/rawImage/78462704", { method: "HEAD" })
       expect(response.ok).toBe(true)
       expect(mockFetch).toHaveBeenCalledWith(
         "https://tsdrapi.uspto.gov/ts/cd/rawImage/78462704",
-        expect.objectContaining({ method: "HEAD" })
+        expect.objectContaining({ method: "HEAD" }),
       )
     })
 
@@ -89,10 +81,7 @@ describe("trademark_image", () => {
       })
       globalThis.fetch = mockFetch
 
-      const response = await fetch(
-        "https://tsdrapi.uspto.gov/ts/cd/rawImage/78462704",
-        { method: "HEAD" }
-      )
+      const response = await fetch("https://tsdrapi.uspto.gov/ts/cd/rawImage/78462704", { method: "HEAD" })
 
       expect(response.ok).toBe(true)
     })
@@ -107,10 +96,7 @@ describe("trademark_image", () => {
       })
       globalThis.fetch = mockFetch
 
-      const response = await fetch(
-        "https://tsdrapi.uspto.gov/ts/cd/rawImage/00000000",
-        { method: "HEAD" }
-      )
+      const response = await fetch("https://tsdrapi.uspto.gov/ts/cd/rawImage/00000000", { method: "HEAD" })
 
       expect(response.ok).toBe(false)
       expect(response.status).toBe(404)
@@ -127,10 +113,7 @@ describe("trademark_image", () => {
       })
       globalThis.fetch = mockFetch
 
-      const response = await fetch(
-        "https://tsdrapi.uspto.gov/ts/cd/rawImage/00000000",
-        { method: "HEAD" }
-      )
+      const response = await fetch("https://tsdrapi.uspto.gov/ts/cd/rawImage/00000000", { method: "HEAD" })
 
       expect(response.ok).toBe(false)
     })
@@ -152,10 +135,7 @@ describe("trademark_image", () => {
       })
       globalThis.fetch = mockFetch
 
-      const response = await fetch(
-        "https://tsdrapi.uspto.gov/ts/cd/rawImage/78462704",
-        { method: "HEAD" }
-      )
+      const response = await fetch("https://tsdrapi.uspto.gov/ts/cd/rawImage/78462704", { method: "HEAD" })
 
       expect(response.ok).toBe(false)
       expect(response.status).toBe(401)
@@ -167,9 +147,9 @@ describe("trademark_image", () => {
       const mockFetch = vi.fn().mockRejectedValue(new Error("Network error"))
       globalThis.fetch = mockFetch
 
-      await expect(
-        fetch("https://tsdrapi.uspto.gov/ts/cd/rawImage/78462704", { method: "HEAD" })
-      ).rejects.toThrow("Network error")
+      await expect(fetch("https://tsdrapi.uspto.gov/ts/cd/rawImage/78462704", { method: "HEAD" })).rejects.toThrow(
+        "Network error",
+      )
     })
   })
 
@@ -179,9 +159,7 @@ describe("trademark_image", () => {
       const serialNumber = "78462704"
       const expectedUrl = `${baseUrl}/rawImage/${serialNumber}`
 
-      expect(expectedUrl).toBe(
-        "https://tsdrapi.uspto.gov/ts/cd/rawImage/78462704"
-      )
+      expect(expectedUrl).toBe("https://tsdrapi.uspto.gov/ts/cd/rawImage/78462704")
     })
 
     it("uses rawImage endpoint", () => {
@@ -200,15 +178,9 @@ describe("trademark_image", () => {
       })
       globalThis.fetch = mockFetch
 
-      await fetch(
-        "https://tsdrapi.uspto.gov/ts/cd/rawImage/78462704",
-        { method: "HEAD" }
-      )
+      await fetch("https://tsdrapi.uspto.gov/ts/cd/rawImage/78462704", { method: "HEAD" })
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({ method: "HEAD" })
-      )
+      expect(mockFetch).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ method: "HEAD" }))
     })
   })
 })

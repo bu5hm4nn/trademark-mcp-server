@@ -34,9 +34,9 @@ export function createMockPool(config: MockPoolConfig = {}) {
 
   let queryCallCount = 0
 
-  const mockQuery: Mock = vi.fn().mockImplementation(async (sql: string, params?: any[]) => {
+  const mockQuery: Mock = vi.fn().mockImplementation(async (_sql: string, _params?: any[]) => {
     if (queryDelay > 0) {
-      await new Promise((resolve) => setTimeout(resolve, queryDelay))
+      await new Promise((resolve) => globalThis.setTimeout(resolve, queryDelay))
     }
 
     if (shouldFailQuery) {
@@ -118,10 +118,7 @@ export function createPgNotInstalledMock() {
 /**
  * Helper to simulate trigram similarity search results
  */
-export function createSimilarityResults(
-  records: TrademarkRecord[],
-  searchTerm: string
-): MockQueryResult {
+export function createSimilarityResults(records: TrademarkRecord[], searchTerm: string): MockQueryResult {
   // Simple simulation of trigram similarity scoring
   const scored = records
     .map((record) => {

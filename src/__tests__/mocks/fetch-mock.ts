@@ -41,9 +41,9 @@ export function createFetchMock(config: FetchMockConfig = {}): Mock {
     networkDelay = 0,
   } = config
 
-  return vi.fn().mockImplementation(async (url: string | URL, init?: RequestInit) => {
+  return vi.fn().mockImplementation(async (url: string | URL, _init?: RequestInit) => {
     if (networkDelay > 0) {
-      await new Promise((resolve) => setTimeout(resolve, networkDelay))
+      await new Promise((resolve) => globalThis.setTimeout(resolve, networkDelay))
     }
 
     if (shouldFail) {
@@ -95,11 +95,7 @@ export function createSuccessResponse(body: any, headers?: Record<string, string
   }
 }
 
-export function createErrorResponse(
-  status: number,
-  statusText: string,
-  body?: any
-): MockResponse {
+export function createErrorResponse(status: number, statusText: string, body?: any): MockResponse {
   return {
     ok: false,
     status,
@@ -193,7 +189,7 @@ export function createAuthenticatedFetchMock(): Mock {
 export function createTimeoutFetchMock(timeoutMs: number = 5000): Mock {
   return vi.fn().mockImplementation(async () => {
     await new Promise((_, reject) => {
-      setTimeout(() => reject(new Error("Request timeout")), timeoutMs)
+      globalThis.setTimeout(() => reject(new Error("Request timeout")), timeoutMs)
     })
   })
 }

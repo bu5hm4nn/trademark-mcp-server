@@ -194,7 +194,7 @@ export const specialCharacterRecords: TrademarkRecord[] = [
   {
     serial_number: "99000005",
     registration_number: null,
-    mark_identification: "TEST \"QUOTED\" MARK",
+    mark_identification: 'TEST "QUOTED" MARK',
     status_code: "LIVE",
     filing_date: "2023-01-05",
     registration_date: null,
@@ -204,7 +204,7 @@ export const specialCharacterRecords: TrademarkRecord[] = [
 // Helper function to generate database query result format
 export function toDbQueryResult(
   records: TrademarkRecord[],
-  similarity?: number
+  similarity?: number,
 ): { rows: Array<TrademarkRecord & { sim_score?: number }> } {
   return {
     rows: records.map((r) => ({

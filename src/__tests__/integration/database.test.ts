@@ -2,13 +2,9 @@
  * Integration tests for PostgreSQL database operations
  * These tests require a real database connection (set TRADEMARK_DB_URL)
  */
-import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from "vitest"
-import { createMockPool, createMockPgModule } from "../mocks/pg-mock.js"
-import {
-  sampleTrademarks,
-  fuzzyMatchRecords,
-  searchResultsWithScores,
-} from "../fixtures/db-records.js"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
+import { createMockPgModule } from "../mocks/pg-mock.js"
+import { sampleTrademarks, searchResultsWithScores } from "../fixtures/db-records.js"
 
 describe("PostgreSQL Integration", () => {
   let originalEnv: typeof process.env
@@ -84,9 +80,7 @@ describe("PostgreSQL Integration", () => {
     it("filters by status code", async () => {
       process.env.TRADEMARK_DB_URL = "postgresql://test:test@localhost:5432/trademarks"
 
-      const activeOnly = sampleTrademarks.filter(
-        (r) => r.status_code === "LIVE" || r.status_code === "REGISTERED"
-      )
+      const activeOnly = sampleTrademarks.filter((r) => r.status_code === "LIVE" || r.status_code === "REGISTERED")
 
       const mockPg = createMockPgModule({
         queryResults: {

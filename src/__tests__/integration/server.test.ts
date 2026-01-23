@@ -147,8 +147,7 @@ describe("Session Management", () => {
     })
 
     it("generates new session ID for new connections", () => {
-      const generateSessionId = () =>
-        Math.random().toString(36).substring(2, 15)
+      const generateSessionId = () => Math.random().toString(36).substring(2, 15)
 
       const sessionId1 = generateSessionId()
       const sessionId2 = generateSessionId()

@@ -64,15 +64,13 @@ describe("MCP Protocol", () => {
 
     it("includes tool descriptions", async () => {
       const { default: server } = await import("../../index.js")
+      expect(server).toBeDefined()
 
       // Each tool should have a description
       const toolDescriptions = {
-        trademark_search_by_wordmark:
-          "Search for trademarks by wordmark (text/phrase)",
-        trademark_search_by_serial:
-          "Search for trademark information using a serial number",
-        trademark_search_by_registration:
-          "Search for trademark information using a registration number",
+        trademark_search_by_wordmark: "Search for trademarks by wordmark (text/phrase)",
+        trademark_search_by_serial: "Search for trademark information using a serial number",
+        trademark_search_by_registration: "Search for trademark information using a registration number",
         trademark_status: "Get comprehensive status information for a trademark",
         trademark_image: "Get the image URL for a trademark",
         trademark_documents: "Get the document bundle URL for a trademark",
@@ -116,6 +114,7 @@ describe("MCP Protocol", () => {
 
     it("returns healthy status", async () => {
       const { default: server } = await import("../../index.js")
+      expect(server).toBeDefined()
 
       // Health check should return healthy status
       const healthResponse = {

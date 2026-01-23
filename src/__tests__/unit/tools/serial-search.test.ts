@@ -2,15 +2,7 @@
  * Unit tests for trademark_search_by_serial tool
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import {
-  createFetchMock,
-  createUsptoFetchMock,
-  createAuthenticatedFetchMock,
-  createTimeoutFetchMock,
-  mockResponses,
-  createSuccessResponse,
-  createErrorResponse,
-} from "../../mocks/fetch-mock.js"
+import { createFetchMock, mockResponses, createSuccessResponse } from "../../mocks/fetch-mock.js"
 import { serialNumberJsonResponse, serialNumberXmlResponse } from "../../fixtures/api-responses.js"
 
 describe("trademark_search_by_serial", () => {
@@ -169,9 +161,9 @@ describe("trademark_search_by_serial", () => {
       const { default: server } = await import("../../../index.js")
       expect(server).toBeDefined()
 
-      await expect(
-        fetch("https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/info.json")
-      ).rejects.toThrow("Request timeout")
+      await expect(fetch("https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/info.json")).rejects.toThrow(
+        "Request timeout",
+      )
     })
 
     it("handles 500 server errors", async () => {
@@ -207,9 +199,7 @@ describe("trademark_search_by_serial", () => {
       const serialNumber = "78462704"
       const expectedUrl = `${baseUrl}/casestatus/sn${serialNumber}/info.json`
 
-      expect(expectedUrl).toBe(
-        "https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/info.json"
-      )
+      expect(expectedUrl).toBe("https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/info.json")
     })
 
     it("constructs correct XML URL", () => {
@@ -217,9 +207,7 @@ describe("trademark_search_by_serial", () => {
       const serialNumber = "78462704"
       const expectedUrl = `${baseUrl}/casestatus/sn${serialNumber}/info.xml`
 
-      expect(expectedUrl).toBe(
-        "https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/info.xml"
-      )
+      expect(expectedUrl).toBe("https://tsdrapi.uspto.gov/ts/cd/casestatus/sn78462704/info.xml")
     })
   })
 })

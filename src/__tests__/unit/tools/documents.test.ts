@@ -27,9 +27,7 @@ describe("trademark_documents", () => {
       const serialNumber = "78462704"
       const expectedUrl = `${baseUrl}/casedocs/bundle.pdf?sn=${serialNumber}`
 
-      expect(expectedUrl).toBe(
-        "https://tsdrapi.uspto.gov/ts/cd/casedocs/bundle.pdf?sn=78462704"
-      )
+      expect(expectedUrl).toBe("https://tsdrapi.uspto.gov/ts/cd/casedocs/bundle.pdf?sn=78462704")
     })
 
     it("uses PDF format for document bundles", () => {
@@ -67,8 +65,7 @@ describe("trademark_documents", () => {
   describe("rate limit warnings", () => {
     it("includes rate limit information in response", () => {
       // The tool should include a note about rate limiting
-      const expectedMessage =
-        "Document downloads are rate-limited to 4 requests per minute per API key"
+      const expectedMessage = "Document downloads are rate-limited to 4 requests per minute per API key"
 
       expect(expectedMessage).toContain("rate-limited")
       expect(expectedMessage).toContain("4 requests per minute")
@@ -81,9 +78,7 @@ describe("trademark_documents", () => {
       const serialNumber = "78462704"
       const expectedUrl = `${baseUrl}/casedocs/bundle.pdf?sn=${serialNumber}`
 
-      expect(expectedUrl).toBe(
-        "https://tsdrapi.uspto.gov/ts/cd/casedocs/bundle.pdf?sn=78462704"
-      )
+      expect(expectedUrl).toBe("https://tsdrapi.uspto.gov/ts/cd/casedocs/bundle.pdf?sn=78462704")
     })
 
     it("uses casedocs endpoint", () => {
@@ -107,13 +102,6 @@ describe("trademark_documents", () => {
     it("returns URL and informational message", () => {
       const serialNumber = "78462704"
       const documentsUrl = `https://tsdrapi.uspto.gov/ts/cd/casedocs/bundle.pdf?sn=${serialNumber}`
-
-      // Expected response format
-      const expectedResponse = {
-        url: documentsUrl,
-        message: expect.stringContaining("Document bundle URL"),
-        rateLimit: expect.stringContaining("rate-limited"),
-      }
 
       expect(documentsUrl).toContain(serialNumber)
     })
