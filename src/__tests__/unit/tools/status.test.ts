@@ -88,11 +88,20 @@ describe("trademark_status", () => {
 
   describe("API errors", () => {
     it("returns error when API key missing", async () => {
-      delete process.env.USPTO_API_KEY
+      const { getTrademarkStatus } = await import("../../../tools.js")
 
-      const { default: server } = await import("../../../index.js")
-      expect(server).toBeDefined()
-      // The tool should return an error message about missing API key
+      const deps = {
+        getApiKey: () => undefined,
+        getDbUrl: () => undefined,
+        fetchFn: vi.fn(),
+        pgImport: vi.fn(),
+      }
+
+      const result = await getTrademarkStatus({ serialNumber: "12345678" }, deps)
+
+      expect(result).toBe(
+        "❌ USPTO API key not configured. Please set the USPTO_API_KEY environment variable with your API key from https://account.uspto.gov/api-manager/"
+      )
     })
 
     it("handles authentication errors", async () => {
