@@ -1,0 +1,9 @@
+[pr_reviewer]
+extra_instructions = """
+Focus on: security vulnerabilities, logic bugs, error handling gaps
+Ignore: style issues (handled by linters)
+"""
+
+[github_action_config]
+auto_review = true
+auto_describe = true

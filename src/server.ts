@@ -1,6 +1,7 @@
 import server from "./index.js"
 
 const port = process.env.PORT ? parseInt(process.env.PORT) : 3000
+const host = process.env.HOST || "0.0.0.0"
 
 // Start FastMCP server with HTTP transport
 // FastMCP automatically provides:
@@ -10,6 +11,7 @@ server.start({
   transportType: "httpStream",
   httpStream: {
     port: port,
+    host: host,
   },
 })
 

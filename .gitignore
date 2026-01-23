@@ -131,3 +131,6 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
+# Trademark data and scripts
+data/
+scripts/.venv/

@@ -12,7 +12,8 @@ COPY package.json pnpm-lock.yaml ./
 RUN npm install -g pnpm
 
 # Install all dependencies (including dev deps for build)
-RUN pnpm install --frozen-lockfile
+# Note: Using --force instead of --frozen-lockfile for pnpm version compatibility
+RUN pnpm install --force
 
 # Copy source code
 COPY . .
@@ -23,16 +24,15 @@ RUN pnpm build
 # Remove dev dependencies to reduce image size
 RUN pnpm prune --prod
 
-# Expose the HTTP server port
-EXPOSE 3000
+# Expose the HTTP server port (configurable via PORT env var)
+EXPOSE ${PORT:-3000}
 
 # Set environment variables
 ENV NODE_ENV=production
-ENV PORT=3000
 
-# Health check
+# Health check - use 127.0.0.1 to force IPv4 (server binds to 0.0.0.0)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:${PORT:-3000}/health || exit 1
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && \
@@ -43,4 +43,5 @@ RUN chown -R trademark:nodejs /app
 USER trademark
 
 # Start the HTTP server
+# Environment variables are passed via docker-compose env_file or environment section
 CMD ["node", "dist/server.js"]
