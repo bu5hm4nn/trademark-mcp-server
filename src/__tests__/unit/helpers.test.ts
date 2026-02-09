@@ -174,6 +174,46 @@ describe("Helper Functions", () => {
   })
 })
 
+describe("getStatusLabel", () => {
+  it("returns human-readable label for Live/Pending codes (600-699)", async () => {
+    const { getStatusLabel } = await import("../../tools.js")
+    expect(getStatusLabel("630")).toBe("630 (Live/Pending)")
+    expect(getStatusLabel("600")).toBe("600 (Live/Pending)")
+    expect(getStatusLabel("699")).toBe("699 (Live/Pending)")
+  })
+
+  it("returns human-readable label for Dead codes (700-799)", async () => {
+    const { getStatusLabel } = await import("../../tools.js")
+    expect(getStatusLabel("710")).toBe("710 (Dead)")
+    expect(getStatusLabel("700")).toBe("700 (Dead)")
+    expect(getStatusLabel("790")).toBe("790 (Dead)")
+  })
+
+  it("returns human-readable label for Registered codes (800-899)", async () => {
+    const { getStatusLabel } = await import("../../tools.js")
+    expect(getStatusLabel("800")).toBe("800 (Registered)")
+    expect(getStatusLabel("899")).toBe("899 (Registered)")
+  })
+
+  it("returns raw code for unrecognized numeric codes", async () => {
+    const { getStatusLabel } = await import("../../tools.js")
+    expect(getStatusLabel("100")).toBe("100")
+    expect(getStatusLabel("999")).toBe("999")
+  })
+
+  it("returns N/A for null or undefined", async () => {
+    const { getStatusLabel } = await import("../../tools.js")
+    expect(getStatusLabel(null)).toBe("N/A")
+    expect(getStatusLabel(undefined)).toBe("N/A")
+  })
+
+  it("returns raw string for non-numeric values", async () => {
+    const { getStatusLabel } = await import("../../tools.js")
+    expect(getStatusLabel("LIVE")).toBe("LIVE")
+    expect(getStatusLabel("DEAD")).toBe("DEAD")
+  })
+})
+
 describe("Constants", () => {
   describe("TSDR_BASE_URL", () => {
     it("has correct USPTO API base URL", () => {

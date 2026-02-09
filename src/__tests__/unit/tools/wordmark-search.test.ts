@@ -52,7 +52,10 @@ describe("trademark_search_by_wordmark", () => {
     it("filters by active status when requested", async () => {
       process.env.TRADEMARK_DB_URL = "postgresql://test:test@localhost:5432/trademarks"
 
-      const activeRecords = sampleTrademarks.filter((r) => r.status_code === "LIVE" || r.status_code === "REGISTERED")
+      const activeRecords = sampleTrademarks.filter((r) => {
+        const code = parseInt(r.status_code, 10)
+        return (code >= 600 && code <= 699) || (code >= 800 && code <= 899)
+      })
 
       const mockPg = createMockPgModule({
         queryResults: {

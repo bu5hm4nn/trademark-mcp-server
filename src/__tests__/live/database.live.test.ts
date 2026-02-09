@@ -112,7 +112,7 @@ describe.skipIf(!shouldRunLiveTests())("Live Database Tests", () => {
       if (!databaseAvailable) return
       const result = await pool.query(
         `SELECT COUNT(*) as count FROM trademarks
-         WHERE status_code IN ('LIVE', 'REGISTERED')`,
+         WHERE (CAST(status_code AS INTEGER) BETWEEN 600 AND 699 OR CAST(status_code AS INTEGER) BETWEEN 800 AND 899)`,
       )
       // Should be able to filter - count may vary
       expect(parseInt(result.rows[0].count)).toBeGreaterThanOrEqual(0)
@@ -267,7 +267,7 @@ describe.skipIf(!shouldRunLiveTests())("Live Database Tests", () => {
          similarity(mark_identification, $1) as sim_score
          FROM trademarks
          WHERE mark_identification % $1
-         AND status_code IN ('LIVE', 'REGISTERED')
+         AND (CAST(status_code AS INTEGER) BETWEEN 600 AND 699 OR CAST(status_code AS INTEGER) BETWEEN 800 AND 899)
          ORDER BY sim_score DESC LIMIT 20`,
         ["GLOBAL"],
       )
