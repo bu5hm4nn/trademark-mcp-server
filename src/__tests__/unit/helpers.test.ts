@@ -212,6 +212,18 @@ describe("getStatusLabel", () => {
     expect(getStatusLabel("LIVE")).toBe("LIVE")
     expect(getStatusLabel("DEAD")).toBe("DEAD")
   })
+
+  it("trims whitespace before parsing", async () => {
+    const { getStatusLabel } = await import("../../tools.js")
+    expect(getStatusLabel("  630  ")).toBe("630 (Live/Pending)")
+    expect(getStatusLabel(" 800 ")).toBe("800 (Registered)")
+  })
+
+  it("returns N/A for whitespace-only strings", async () => {
+    const { getStatusLabel } = await import("../../tools.js")
+    expect(getStatusLabel("   ")).toBe("N/A")
+    expect(getStatusLabel("")).toBe("N/A")
+  })
 })
 
 describe("Constants", () => {

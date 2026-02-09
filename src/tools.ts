@@ -100,13 +100,14 @@ export function checkApiKey(deps: ToolDependencies = defaultDependencies): strin
  * - 800-899: Registered/Active
  */
 export function getStatusLabel(statusCode: string | null | undefined): string {
-  if (!statusCode) return "N/A"
-  const code = parseInt(statusCode, 10)
-  if (isNaN(code)) return statusCode
-  if (code >= 600 && code <= 699) return `${statusCode} (Live/Pending)`
-  if (code >= 700 && code <= 799) return `${statusCode} (Dead)`
-  if (code >= 800 && code <= 899) return `${statusCode} (Registered)`
-  return statusCode
+  if (!statusCode || !statusCode.trim()) return "N/A"
+  const trimmed = statusCode.trim()
+  const code = Number(trimmed)
+  if (isNaN(code)) return trimmed
+  if (code >= 600 && code <= 699) return `${trimmed} (Live/Pending)`
+  if (code >= 700 && code <= 799) return `${trimmed} (Dead)`
+  if (code >= 800 && code <= 899) return `${trimmed} (Registered)`
+  return trimmed
 }
 
 // Tool argument types
@@ -164,7 +165,7 @@ export async function searchByWordmark(
       const params: (string | number)[] = [args.wordmark]
 
       if (args.status === "active") {
-        query += ` AND (CAST(status_code AS INTEGER) BETWEEN 600 AND 699 OR CAST(status_code AS INTEGER) BETWEEN 800 AND 899)`
+        query += ` AND ((status_code >= '600' AND status_code < '700') OR (status_code >= '800' AND status_code < '900'))`
       }
 
       query += ` ORDER BY sim_score DESC LIMIT $2`

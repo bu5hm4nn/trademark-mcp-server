@@ -89,7 +89,7 @@ describe("Tool Execution Tests", () => {
 
       // Verify the query includes status filter
       const [query] = mockQuery.mock.calls[0]
-      expect(query).toContain("CAST(status_code AS INTEGER) BETWEEN 600 AND 699")
+      expect(query).toContain("status_code >= '600' AND status_code < '700'")
     })
 
     it("returns no results message when empty", async () => {
