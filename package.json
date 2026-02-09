@@ -58,7 +58,7 @@
   },
   "homepage": "https://github.com/jordanburke/trademark-mcp-server#readme",
   "dependencies": {
-    "fastmcp": "^3.13.0",
+    "fastmcp": "^3.32.0",
     "zod": "^3.25.76"
   },
   "optionalDependencies": {
@@ -80,6 +80,11 @@
     "tsx": "^4.20.3",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
+  },
+  "pnpm": {
+    "overrides": {
+      "@modelcontextprotocol/sdk": ">=1.26.0"
+    }
   },
   "packageManager": "pnpm@10.14.0-0+sha512.2cd47a0cbf5f1d1de7693a88307a0ede5be94e0d3b34853d800ee775efbea0650cb562b77605ec80bc8d925f5cd27c4dfe8bb04d3a0b76090784c664450d32d6"
 }

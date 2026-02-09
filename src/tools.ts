@@ -93,6 +93,23 @@ export function checkApiKey(deps: ToolDependencies = defaultDependencies): strin
   return null
 }
 
+/**
+ * Convert numeric USPTO status code to human-readable label.
+ * - 600-699: Live/Pending (application in progress)
+ * - 700-799: Dead (abandoned, cancelled, expired)
+ * - 800-899: Registered/Active
+ */
+export function getStatusLabel(statusCode: string | null | undefined): string {
+  if (!statusCode || !statusCode.trim()) return "N/A"
+  const trimmed = statusCode.trim()
+  const code = Number(trimmed)
+  if (isNaN(code)) return trimmed
+  if (code >= 600 && code <= 699) return `${trimmed} (Live/Pending)`
+  if (code >= 700 && code <= 799) return `${trimmed} (Dead)`
+  if (code >= 800 && code <= 899) return `${trimmed} (Registered)`
+  return trimmed
+}
+
 // Tool argument types
 export interface WordmarkSearchArgs {
   wordmark: string
@@ -148,7 +165,7 @@ export async function searchByWordmark(
       const params: (string | number)[] = [args.wordmark]
 
       if (args.status === "active") {
-        query += ` AND status_code IN ('LIVE', 'REGISTERED')`
+        query += ` AND ((status_code >= '600' AND status_code < '700') OR (status_code >= '800' AND status_code < '900'))`
       }
 
       query += ` ORDER BY sim_score DESC LIMIT $2`
@@ -165,7 +182,7 @@ export async function searchByWordmark(
           return `${index + 1}. **${tm.mark_identification || "N/A"}**
    - Serial Number: ${tm.serial_number || "N/A"}
    - Registration Number: ${tm.registration_number || "N/A"}
-   - Status: ${tm.status_code || "N/A"}
+   - Status: ${getStatusLabel(tm.status_code)}
    - Filing Date: ${tm.filing_date || "N/A"}
    - Registration Date: ${tm.registration_date || "N/A"}
    - Similarity: ${(tm.sim_score * 100).toFixed(1)}%`

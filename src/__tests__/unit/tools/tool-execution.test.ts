@@ -65,7 +65,10 @@ describe("Tool Execution Tests", () => {
 
     it("filters by active status when requested", async () => {
       const mockQuery = vi.fn().mockResolvedValue({
-        rows: searchResultsWithScores.filter((r) => r.status_code === "LIVE" || r.status_code === "REGISTERED"),
+        rows: searchResultsWithScores.filter((r) => {
+          const code = parseInt(r.status_code, 10)
+          return (code >= 600 && code <= 699) || (code >= 800 && code <= 899)
+        }),
       })
 
       const mockPool = { query: mockQuery }
@@ -86,7 +89,7 @@ describe("Tool Execution Tests", () => {
 
       // Verify the query includes status filter
       const [query] = mockQuery.mock.calls[0]
-      expect(query).toContain("status_code IN ('LIVE', 'REGISTERED')")
+      expect(query).toContain("status_code >= '600' AND status_code < '700'")
     })
 
     it("returns no results message when empty", async () => {
