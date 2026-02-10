@@ -1,6 +1,6 @@
 {
   "name": "trademark-mcp-server",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A Model Context Protocol (MCP) server that provides tools for searching and retrieving USPTO trademark information using the TSDR API.",
   "type": "module",
   "main": "dist/index.js",
@@ -19,6 +19,7 @@
   "scripts": {
     "build": "tsup",
     "build:prod": "SKIP_DTS=true tsup",
+    "docker:build": "docker build --build-arg GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo unknown) -t trademark-mcp-server .",
     "prepublishOnly": "pnpm run lint && pnpm run format:check && pnpm run test && pnpm run build",
     "inspect": "pnpm build && npx @modelcontextprotocol/inspector dist/bin.js",
     "dev": "pnpm build && pnpm inspect",
