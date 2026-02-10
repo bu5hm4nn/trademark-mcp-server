@@ -15,11 +15,18 @@ RUN npm install -g pnpm
 # Note: Using --force instead of --frozen-lockfile for pnpm version compatibility
 RUN pnpm install --force
 
+# Accept git commit hash as build arg
+ARG GIT_COMMIT=unknown
+
 # Copy source code
 COPY . .
 
 # Build the application
 RUN pnpm build
+
+# Make git commit hash available at runtime and as image metadata
+ENV GIT_COMMIT=$GIT_COMMIT
+LABEL git-commit="$GIT_COMMIT"
 
 # Remove dev dependencies to reduce image size
 RUN pnpm prune --prod

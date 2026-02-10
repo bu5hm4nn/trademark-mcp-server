@@ -648,7 +648,7 @@ describe("Tool Execution Tests", () => {
       }
 
       const headers = getHeaders(deps)
-      expect(headers["User-Agent"]).toBe("trademark-mcp-server/1.0.0")
+      expect(headers["User-Agent"]).toBe("trademark-mcp-server/1.1.0")
       expect(headers["USPTO-API-KEY"]).toBe("my-api-key")
     })
 
@@ -663,7 +663,7 @@ describe("Tool Execution Tests", () => {
       }
 
       const headers = getHeaders(deps)
-      expect(headers["User-Agent"]).toBe("trademark-mcp-server/1.0.0")
+      expect(headers["User-Agent"]).toBe("trademark-mcp-server/1.1.0")
       expect(headers["USPTO-API-KEY"]).toBeUndefined()
     })
 

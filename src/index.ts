@@ -1,3 +1,4 @@
+import { createRequire } from "node:module"
 import { FastMCP } from "fastmcp"
 import { z } from "zod"
 import {
@@ -9,9 +10,15 @@ import {
   getTrademarkDocuments,
 } from "./tools.js"
 
+const require = createRequire(import.meta.url)
+const { version: baseVersion } = require("../package.json")
+const version = process.env.GIT_COMMIT
+  ? `${baseVersion}+${process.env.GIT_COMMIT}`
+  : baseVersion
+
 const server = new FastMCP({
   name: "trademark-mcp-server",
-  version: "1.1.0",
+  version,
   instructions: `
 This MCP server provides tools for searching and retrieving USPTO trademark information.
 
@@ -35,7 +42,7 @@ Rate limits:
     message: JSON.stringify({
       status: "healthy",
       timestamp: new Date().toISOString(),
-      version: "1.0.0",
+      version,
       service: "trademark-mcp-server",
     }),
     path: "/health",
